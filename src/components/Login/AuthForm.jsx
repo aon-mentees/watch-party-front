@@ -6,7 +6,8 @@ import authService from "../../services/authService";
 const AuthForm = ({ type, active, title, isSignup }) => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({
-    username: "",
+    fullName: "",
+    phoneNumber: "",
     email: "",
     password: "",
   });
@@ -35,14 +36,31 @@ const AuthForm = ({ type, active, title, isSignup }) => {
 
     try {
       if (isSignup) {
-        // Sign Up
-        if (!formData.username || !formData.email || !formData.password) {
+        if (!formData.fullName || !formData.phoneNumber || !formData.email || !formData.password) {
           toast.error("❌ All fields are required!");
           setLoading(false);
           return;
         }
-        await authService.signUp(formData.username, formData.email, formData.password);
-        toast.success(`🎬 Welcome ${formData.username}! Account created successfully!`); 
+        
+        const phoneRegex = /^[\d\s\-+()]{10,}$/;
+        if (!phoneRegex.test(formData.phoneNumber)) {
+          toast.error("❌ Please enter a valid phone number!");
+          setLoading(false);
+          return;
+        }
+
+        const result = await authService.signUp({
+          fullName: formData.fullName,
+          phoneNumber: formData.phoneNumber,
+          email: formData.email,
+          password: formData.password,
+        });
+        
+        toast.success(`🎬 Welcome ${formData.fullName}! Account created successfully!`); 
+        
+        setTimeout(() => {
+          navigate("/home");
+        }, 1000);
       } else {
         // Sign In
         if (!formData.email || !formData.password) {
@@ -50,19 +68,27 @@ const AuthForm = ({ type, active, title, isSignup }) => {
           setLoading(false);
           return;
         }
-        const result = await authService.signIn(formData.email, formData.password);
-        toast.success(`🍿 Welcome back, ${result.user.username}!`);
+        
+        const result = await authService.signIn({
+          email: formData.email,
+          password: formData.password,
+        });
+        
+        const userName = result.user?.fullName || result.user?.email || "User";
+        toast.success(`🍿 Welcome back, ${userName}!`);
 
         setTimeout(() => {
-        navigate("/home");
-      }, 1000);
+          navigate("/home");
+        }, 1000);
       }
-      
 
       setLoading(false);
-      setFormData({username: "",
-                    email: "",
-                    password: "",});
+      setFormData({
+        fullName: "",
+        phoneNumber: "",
+        email: "",
+        password: "",
+      });
     } catch (err) {
       toast.error(`❌ ${err.message}`);
       setLoading(false);
@@ -77,20 +103,31 @@ const AuthForm = ({ type, active, title, isSignup }) => {
       
       <div className="flex flex-col items-center gap-3 w-full max-w-sm">
         {isSignup && (
-          <input
-            type="text"
-            name="username"
-            placeholder="Username"
-            value={formData.username}
-            onChange={handleChange}
-            disabled={loading}
-            className="w-full rounded-lg border-0 bg-[#1a1520] px-3 py-3.5 text-white placeholder:text-[#8d889d] disabled:opacity-50"
-          />
+          <>
+            <input
+              type="text"
+              name="fullName"
+              placeholder="Full Name"
+              value={formData.fullName}
+              onChange={handleChange}
+              disabled={loading}
+              className="w-full rounded-lg border-0 bg-[#1a1520] px-3 py-3.5 text-white placeholder:text-[#8d889d] disabled:opacity-50"
+            />
+            <input
+              type="tel"
+              name="phoneNumber"
+              placeholder="Phone Number"
+              value={formData.phoneNumber}
+              onChange={handleChange}
+              disabled={loading}
+              className="w-full rounded-lg border-0 bg-[#1a1520] px-3 py-3.5 text-white placeholder:text-[#8d889d] disabled:opacity-50"
+            />
+          </>
         )}
         <input
           type="email"
           name="email"
-          placeholder={isSignup ? "Email" : "Email or Username"}
+          placeholder="Email"
           value={formData.email}
           onChange={handleChange}
           disabled={loading}
