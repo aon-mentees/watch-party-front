@@ -5,6 +5,8 @@ import Login from "./pages/Login";
 import Home from "./pages/Home";
 import NotFound from "./pages/NotFound";
 import DebugStorage from "./pages/DebugStorage";
+import VideoPlayer from "./components/VideoFeed/VideoPlayer";
+import UploadVideo from "./pages/UploadVideo";
 import './index.css';
 import "./assets/styles/toastCustom.css";
 
@@ -16,6 +18,14 @@ const router = createBrowserRouter([
   {
     path: "/home",
     element: <Home />,
+  },
+  {
+    path: "/watch",
+    element: <VideoPlayer />,
+  },
+  {
+    path: "/upload",
+    element: <UploadVideo />,
   },
   {
     path: "/debug",
