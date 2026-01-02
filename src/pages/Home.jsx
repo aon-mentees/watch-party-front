@@ -2,15 +2,24 @@ import React, { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import authService from "../services/authService";
+import apiClient from "../config/api";
 
 const Home = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const [videos, setVideos] = useState([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState(null);
+  const [pagination, setPagination] = useState({
+    size: 6,
+    number: 0,
+    totalElements: 0,
+    totalPages: 1,
+  });
 
   useEffect(() => {
     console.log("Home component mounted - checking authentication");
     
-    // Check if user is authenticated
     const token = localStorage.getItem("authToken");
     const userStr = localStorage.getItem("currentUser");
     
@@ -34,6 +43,82 @@ const Home = () => {
       navigate("/");
     }
   }, [navigate]);
+
+  useEffect(() => {
+    const fetchVideos = async (pageNumber = 0) => {
+      setLoading(true);
+      setError(null);
+      try {
+        const response = await apiClient.get("/api/v1/videos", {
+          params: {
+            page: pageNumber,
+            size: 6,
+            sortBy: "timestamp",
+          },
+        });
+        console.log("Videos fetched successfully:", response.data);
+        if (response.data && response.data.content) {
+          setVideos(response.data.content);
+          if (response.data.page) {
+            setPagination(response.data.page);
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching videos:", err);
+        setError("Failed to load videos. Please try again later.");
+        toast.error("Failed to load videos");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    if (user) {
+      fetchVideos(pagination.number);
+    }
+  }, [user]);
+
+  const handleNextPage = () => {
+    if (pagination.number < pagination.totalPages - 1) {
+      fetchVideos(pagination.number + 1);
+    }
+  };
+
+  const handlePrevPage = () => {
+    if (pagination.number > 0) {
+      fetchVideos(pagination.number - 1);
+    }
+  };
+
+  const handleWatchVideo = (video) => {
+    navigate("/watch", { state: { video } });
+  };
+
+  const fetchVideos = async (pageNumber = 0) => {
+    setLoading(true);
+    setError(null);
+    try {
+      const response = await apiClient.get("/api/v1/videos", {
+        params: {
+          page: pageNumber,
+          size: 6,
+          sortBy: "timestamp",
+        },
+      });
+      console.log("Videos fetched successfully:", response.data);
+      if (response.data && response.data.content) {
+        setVideos(response.data.content);
+        if (response.data.page) {
+          setPagination(response.data.page);
+        }
+      }
+    } catch (err) {
+      console.error("Error fetching videos:", err);
+      setError("Failed to load videos. Please try again later.");
+      toast.error("Failed to load videos");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleLogout = () => {
     authService.logout();
@@ -162,14 +247,100 @@ const Home = () => {
           </div>
         </div>
 
+        {/* Videos Section */}
+        <div className="mb-12">
+          <h2 className="text-3xl font-bold mb-6">Available Videos</h2>
+          {error && (
+            <div className="bg-red-500/20 border border-red-500 text-red-300 p-4 rounded-lg mb-6">
+              {error}
+            </div>
+          )}
+          {loading ? (
+            <div className="flex justify-center items-center h-64">
+              <div className="text-center">
+                <div className="text-4xl mb-4">🎬</div>
+                <p className="text-white/70">Loading videos...</p>
+              </div>
+            </div>
+          ) : videos && videos.length > 0 ? (
+            <>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                {videos.map((video) => (
+                  <div
+                    key={video.videoUrl}
+                    onClick={() => handleWatchVideo(video)}
+                    className="bg-[#0d0a12] border border-red-900/20 rounded-2xl overflow-hidden hover:border-red-500/40 transition-all hover:shadow-[0_0_30px_rgba(196,30,58,0.3)] cursor-pointer group"
+                  >
+                    <div className="relative overflow-hidden bg-[#1a1520] aspect-video flex items-center justify-center group">
+                      <video
+                        src={video.videoUrl}
+                        className="w-full h-full object-cover"
+                        onLoadedMetadata={(e) => {
+                          e.target.currentTime = 1;
+                        }}
+                      />
+                      <div className="absolute inset-0 bg-black/30 group-hover:bg-black/20 transition-all flex items-center justify-center">
+                        <svg
+                          className="w-20 h-20 opacity-70 group-hover:opacity-100 transition-opacity drop-shadow-lg text-white"
+                          fill="currentColor"
+                          viewBox="0 0 24 24"
+                        >
+                          <polygon points="5 3 19 12 5 21" />
+                        </svg>
+                      </div>
+                    </div>
+                    <div className="p-4">
+                      <h3 className="font-semibold text-lg mb-2 line-clamp-2">{video.videoName}</h3>
+                      <p className="text-white/70 text-sm mb-1">
+                        <span className="text-white/50">By:</span> {video.ownerFullName}
+                      </p>
+                      <div className="flex flex-col gap-2 text-xs text-white/50">
+                        <span>📅 {new Date(video.timestamp).toLocaleDateString()}</span>
+                        <span>🕒 {new Date(video.timestamp).toLocaleTimeString()}</span>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Pagination Controls */}
+              <div className="flex justify-between items-center mt-8">
+                <button
+                  onClick={handlePrevPage}
+                  disabled={pagination.number === 0}
+                  className="px-6 py-2 bg-red-900/40 hover:bg-red-900/60 disabled:opacity-50 disabled:cursor-not-allowed border border-red-900/20 rounded-lg transition-all text-white"
+                >
+                  ← Previous
+                </button>
+                <div className="text-white/70 text-sm">
+                  Page {pagination.number + 1} of {pagination.totalPages} ({pagination.totalElements} total videos)
+                </div>
+                <button
+                  onClick={handleNextPage}
+                  disabled={pagination.number >= pagination.totalPages - 1}
+                  className="px-6 py-2 bg-red-900/40 hover:bg-red-900/60 disabled:opacity-50 disabled:cursor-not-allowed border border-red-900/20 rounded-lg transition-all text-white"
+                >
+                  Next →
+                </button>
+              </div>
+            </>
+          ) : (
+            <div className="text-center py-12">
+              <p className="text-white/70 text-lg">No videos available yet</p>
+            </div>
+          )}
+        </div>
+
         {/* CTA Section */}
         <div className="bg-linear-to-br from-[#c41e3a] via-[#d4145a] to-[#fbb034] rounded-2xl p-8 md:p-12 text-center shadow-[0_0_50px_rgba(196,30,58,0.4)]">
           <h3 className="text-3xl font-bold mb-4">Ready to Start Watching?</h3>
           <p className="text-white/90 mb-6 max-w-xl mx-auto">
             Create your first watch party now and experience movies and shows like never before!
           </p>
-          <button className="px-8 py-3 bg-white text-[#c41e3a] rounded-full font-semibold hover:bg-white/90 transition-all shadow-lg">
-            Create Watch Party
+          <button 
+            onClick={() => navigate("/upload")}
+            className="px-8 py-3 bg-white text-[#c41e3a] rounded-full font-semibold hover:bg-white/90 transition-all shadow-lg">
+            Upload Video
           </button>
         </div>
       </main>
