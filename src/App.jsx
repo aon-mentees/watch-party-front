@@ -4,6 +4,7 @@ import "react-toastify/dist/ReactToastify.css";
 import Login from "./pages/Login";
 import Home from "./pages/Home";
 import NotFound from "./pages/NotFound";
+import DebugStorage from "./pages/DebugStorage";
 import './index.css';
 import "./assets/styles/toastCustom.css";
 
@@ -15,6 +16,10 @@ const router = createBrowserRouter([
   {
     path: "/home",
     element: <Home />,
+  },
+  {
+    path: "/debug",
+    element: <DebugStorage />,
   },
   {
     path: "*",

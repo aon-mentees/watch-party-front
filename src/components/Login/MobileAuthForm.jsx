@@ -26,14 +26,12 @@ const MobileAuthForm = ({ isSignup }) => {
 
     try {
       if (isSignup) {
-        // Sign Up - validate all required fields
         if (!formData.fullName || !formData.phoneNumber || !formData.email || !formData.password) {
           toast.error("❌ All fields are required!");
           setLoading(false);
           return;
         }
         
-        // Basic phone number validation
         const phoneRegex = /^[\d\s\-+()]{10,}$/;
         if (!phoneRegex.test(formData.phoneNumber)) {
           toast.error("❌ Please enter a valid phone number!");
@@ -41,15 +39,24 @@ const MobileAuthForm = ({ isSignup }) => {
           return;
         }
 
-        await authService.signUp({
+        const result = await authService.signUp({
           fullName: formData.fullName,
           phoneNumber: formData.phoneNumber,
           email: formData.email,
           password: formData.password,
         });
+        
+        console.log("SignUp success:", result);
         toast.success(`🎬 Welcome ${formData.fullName}! Account created successfully!`);
+        
+        setFormData({
+          fullName: "",
+          phoneNumber: "",
+          email: "",
+          password: "",
+        });
+        setLoading(false);
       } else {
-        // Sign In
         if (!formData.email || !formData.password) {
           toast.error("❌ Email and password are required!");
           setLoading(false);
@@ -59,15 +66,25 @@ const MobileAuthForm = ({ isSignup }) => {
           email: formData.email,
           password: formData.password,
         });
+        
+        console.log("SignIn success:", result);
         const userName = result.user?.fullName || result.user?.email || "User";
         toast.success(`🍿 Welcome back, ${userName}!`);
+        
+        setFormData({
+          fullName: "",
+          phoneNumber: "",
+          email: "",
+          password: "",
+        });
+        setLoading(false);
       }
 
-      // Success - navigate to home after a short delay
       setTimeout(() => {
         navigate("/home");
-      }, 1000);
+      }, 1500);
     } catch (err) {
+      console.error("Auth error:", err);
       toast.error(`❌ ${err.message}`);
       setLoading(false);
     }

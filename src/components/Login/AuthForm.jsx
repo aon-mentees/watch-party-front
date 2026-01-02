@@ -56,11 +56,21 @@ const AuthForm = ({ type, active, title, isSignup }) => {
           password: formData.password,
         });
         
+        console.log("SignUp success:", result);
         toast.success(`🎬 Welcome ${formData.fullName}! Account created successfully!`); 
+        
+        // Clear form and navigate
+        setFormData({
+          fullName: "",
+          phoneNumber: "",
+          email: "",
+          password: "",
+        });
+        setLoading(false);
         
         setTimeout(() => {
           navigate("/home");
-        }, 1000);
+        }, 1500);
       } else {
         // Sign In
         if (!formData.email || !formData.password) {
@@ -74,22 +84,25 @@ const AuthForm = ({ type, active, title, isSignup }) => {
           password: formData.password,
         });
         
+        console.log("SignIn success:", result);
         const userName = result.user?.fullName || result.user?.email || "User";
         toast.success(`🍿 Welcome back, ${userName}!`);
 
+        // Clear form and navigate
+        setFormData({
+          fullName: "",
+          phoneNumber: "",
+          email: "",
+          password: "",
+        });
+        setLoading(false);
+        
         setTimeout(() => {
           navigate("/home");
-        }, 1000);
+        }, 1500);
       }
-
-      setLoading(false);
-      setFormData({
-        fullName: "",
-        phoneNumber: "",
-        email: "",
-        password: "",
-      });
     } catch (err) {
+      console.error("Auth error:", err);
       toast.error(`❌ ${err.message}`);
       setLoading(false);
     }

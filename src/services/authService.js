@@ -3,6 +3,7 @@ import apiClient from '../config/api';
 const authService = {
   signUp: async ({ phoneNumber, email, password, fullName }) => {
     try {
+      console.log("Attempting signup with:", { phoneNumber, email, fullName });
       const response = await apiClient.post('/api/v1/auth/signup', {
         phoneNumber,
         email,
@@ -10,42 +11,77 @@ const authService = {
         fullName,
       });
 
-      const { data } = response;
+      console.log("Full response:", response);
+      
+      const responseData = response.data.data;
+      console.log("Response data:", responseData);
 
-      if (data.token) {
-        localStorage.setItem('authToken', data.token);
+      const token = responseData.token;
+      
+      const user = {
+        id: responseData.id,
+        name: responseData.name,
+        email: responseData.email,
+        phoneNumber: responseData.phoneNumber,
+      };
+
+      if (!token) {
+        console.error("Missing token in response:", responseData);
+        throw new Error('Invalid response: missing token');
       }
 
-      if (data.user) {
-        localStorage.setItem('currentUser', JSON.stringify(data.user));
-      }
+      localStorage.setItem('authToken', token);
+      localStorage.setItem('currentUser', JSON.stringify(user));
+      
+      console.log("✅ Signup success - Data saved to localStorage");
+      console.log("Token:", token.substring(0, 50) + "...");
+      console.log("User:", user);
 
-      return data;
+      return { token, user };
     } catch (error) {
-      throw new Error(error.message || 'Sign up failed');
+      console.error("Signup error:", error);
+      throw new Error(error.response?.data?.message || error.message || 'Sign up failed');
     }
   },
 
   signIn: async ({ email, password }) => {
     try {
+      console.log("Attempting signin with:", { email });
       const response = await apiClient.post('/api/v1/auth/login', {
         email,
         password,
       });
 
-      const { data } = response;
+      console.log("Full response:", response);
+      
+      const responseData = response.data.data;
+      console.log("Response data:", responseData);
 
-      if (data.token) {
-        localStorage.setItem('authToken', data.token);
+      const token = responseData.token;
+      
+      const user = {
+        id: responseData.id,
+        name: responseData.name,
+        email: responseData.email,
+        phoneNumber: responseData.phoneNumber,
+      };
+
+      if (!token) {
+        console.error("Missing token in response:", responseData);
+        throw new Error('Invalid response: missing token');
       }
 
-      if (data.user) {
-        localStorage.setItem('currentUser', JSON.stringify(data.user));
-      }
+      localStorage.setItem('authToken', token);
+      localStorage.setItem('currentUser', JSON.stringify(user));
+      
+      console.log("✅ SignIn success - Data saved to localStorage");
+      console.log("Token:", token.substring(0, 50) + "...");
+      console.log("User:", user);
 
-      return data;
+      return { token, user };
     } catch (error) {
-      throw new Error(error.message || 'Login failed');
+      console.error("Signin error:", error);
+      throw new Error(error.response?.data?.message || error.message || 'Login failed');
     }
   },
 
@@ -55,7 +91,6 @@ const authService = {
     } catch (error) {
       console.error('Logout error:', error);
     } finally {
-      // Always clear local storage
       localStorage.removeItem('authToken');
       localStorage.removeItem('currentUser');
     }

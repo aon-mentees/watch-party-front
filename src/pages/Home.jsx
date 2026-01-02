@@ -8,15 +8,31 @@ const Home = () => {
   const [user, setUser] = useState(null);
 
   useEffect(() => {
+    console.log("Home component mounted - checking authentication");
+    
     // Check if user is authenticated
-    if (!authService.isAuthenticated()) {
+    const token = localStorage.getItem("authToken");
+    const userStr = localStorage.getItem("currentUser");
+    
+    console.log("Token from localStorage:", token ? "✅ Found" : "❌ Not found");
+    console.log("User from localStorage:", userStr ? "✅ Found" : "❌ Not found");
+    
+    if (!token || !userStr) {
+      console.log("User not authenticated, redirecting to login...");
       navigate("/");
       return;
     }
 
-    // Get current user
-    const currentUser = authService.getCurrentUser();
-    setUser(currentUser);
+    try {
+      const currentUser = JSON.parse(userStr);
+      console.log("User data parsed successfully:", currentUser);
+      setUser(currentUser);
+    } catch (error) {
+      console.error("Error parsing user:", error);
+      localStorage.removeItem("authToken");
+      localStorage.removeItem("currentUser");
+      navigate("/");
+    }
   }, [navigate]);
 
   const handleLogout = () => {
@@ -28,7 +44,14 @@ const Home = () => {
   };
 
   if (!user) {
-    return null; // or loading spinner
+    return (
+      <div className="min-h-screen bg-linear-to-br from-[#0f0c15] via-[#1a1520] to-[#0f0c15] flex items-center justify-center">
+        <div className="text-white text-center">
+          <div className="text-4xl mb-4">🎬</div>
+          <p>Loading...</p>
+        </div>
+      </div>
+    );
   }
 
   return (
@@ -83,7 +106,7 @@ const Home = () => {
               </h1>
             </div>
             <div className="flex items-center gap-4">
-              <span className="text-sm text-white/70">Welcome, {user.username}!</span>
+              <span className="text-sm text-white/70">Welcome, {user.name}!</span>
               <button
                 onClick={handleLogout}
                 className="px-6 py-2 rounded-full bg-linear-to-br from-[#c41e3a] via-[#d4145a] to-[#fbb034] text-white hover:opacity-90 transition-opacity shadow-lg shadow-red-500/30"
@@ -101,7 +124,7 @@ const Home = () => {
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 mb-4">
             <span className="text-5xl">🎬</span>
-            <h2 className="text-4xl md:text-5xl font-bold">Welcome Back, {user.username}!</h2>
+            <h2 className="text-4xl md:text-5xl font-bold">Welcome Back, {user.name}!</h2>
             <span className="text-5xl">🍿</span>
           </div>
           <p className="text-xl text-white/75 max-w-2xl mx-auto">
