@@ -7,6 +7,7 @@ import NotFound from "./pages/NotFound";
 import DebugStorage from "./pages/DebugStorage";
 import VideoPlayer from "./components/VideoFeed/VideoPlayer";
 import UploadVideo from "./pages/UploadVideo";
+import Profile from "./pages/Profile";
 import './index.css';
 import "./assets/styles/toastCustom.css";
 
@@ -26,6 +27,10 @@ const router = createBrowserRouter([
   {
     path: "/upload",
     element: <UploadVideo />,
+  },
+  {
+    path: "/profile",
+    element: <Profile />,
   },
   {
     path: "/debug",

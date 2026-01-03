@@ -104,6 +104,12 @@ const icons = {
       <path d="M8 10V7a4 4 0 0 1 8 0v3" />
     </>
   ),
+  user: () => (
+    <>
+      <circle cx="12" cy="8" r="4" />
+      <path d="M6 20a6 6 0 0 1 12 0" />
+    </>
+  ),
   party: () => (
     <>
       <path d="M4 20l3-9 9 3-12 6z" />

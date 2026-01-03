@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import authService from "../services/authService";
 import apiClient from "../config/api";
+import userService from "../services/userService";
 import Icon from "../components/Icon";
 
 const Home = () => {
@@ -19,6 +20,29 @@ const Home = () => {
     totalPages: 1,
   });
 
+  const normalizeUser = (data) => ({
+    id: data?.id || data?.userId || data?.sub,
+    name: data?.fullName || data?.name,
+    email: data?.email,
+    phoneNumber: data?.phoneNumber,
+    profilePictureUrl: data?.profilePictureUrl || data?.avatarUrl,
+  });
+
+  const fetchCurrentUser = async () => {
+    try {
+      const apiUser = await userService.getMe();
+      const normalizedUser = normalizeUser(apiUser);
+      setUser(normalizedUser);
+      setProfile(normalizedUser);
+      localStorage.setItem("currentUser", JSON.stringify(normalizedUser));
+    } catch (error) {
+      console.error("Error fetching current user:", error);
+      toast.error(error?.message || "Session expired. Please login again.");
+      authService.logout();
+      navigate("/");
+    }
+  };
+
   useEffect(() => {
     console.log("Home component mounted - checking authentication");
     
@@ -28,40 +52,25 @@ const Home = () => {
     console.log("Token from localStorage:", token ? "Found" : "Not found");
     console.log("User from localStorage:", userStr ? "Found" : "Not found");
     
-    if (!token || !userStr) {
+    if (!token) {
       console.log("User not authenticated, redirecting to login...");
       navigate("/");
       return;
     }
 
     try {
-      const currentUser = JSON.parse(userStr);
-      console.log("User data parsed successfully:", currentUser);
-      setUser(currentUser);
-      
-      const userId = currentUser.sub || currentUser.userId || currentUser.id;
-      console.log("Fetching profile for userId:", userId);
-      if (userId) {
-        fetchUserProfile(userId);
+      if (userStr) {
+        const cachedUser = JSON.parse(userStr);
+        setUser(cachedUser);
+        setProfile(cachedUser);
       }
     } catch (error) {
       console.error("Error parsing user:", error);
-      localStorage.removeItem("authToken");
-      localStorage.removeItem("currentUser");
-      navigate("/");
     }
+
+    fetchCurrentUser();
   }, [navigate]);
 
-  const fetchUserProfile = async (userId) => {
-    try {
-      console.log("Making API call to /api/v1/profiles/" + userId);
-      const response = await apiClient.get(`/api/v1/profiles/${userId}`);
-      console.log("Profile fetched successfully:", response.data);
-      setProfile(response.data);
-    } catch (err) {
-      console.error("Error fetching profile:", err);
-    }
-  };
 
   useEffect(() => {
     const fetchVideos = async (pageNumber = 0) => {
@@ -215,13 +224,29 @@ const Home = () => {
             </div>
             
             {/* Profile Card */}
-            <div className="flex items-center gap-4 rounded-full px-4 py-2 transition-all">
-              <div className="w-10 h-10 rounded-full bg-linear-to-br from-[#c41e3a] via-[#d4145a] to-[#fbb034] flex items-center justify-center flex-shrink-0">
-                <span className="text-white font-semibold text-sm">
-                  {(profile?.name || user?.name || "U").charAt(0).toUpperCase()}
-                </span>
+            <div
+              className="flex items-center gap-3 rounded-full px-3 py-2 transition-all bg-[#0d0a12] border border-red-900/20 hover:border-red-500/40 hover:bg-red-900/10 cursor-pointer"
+              onClick={() => navigate("/profile")}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => {
+                if (e.key === "Enter" || e.key === " ") navigate("/profile");
+              }}
+            >
+              <div className="w-10 h-10 rounded-full bg-[#1a1520] flex items-center justify-center flex-shrink-0 overflow-hidden border border-red-900/30">
+                {profile?.profilePictureUrl ? (
+                  <img
+                    src={profile.profilePictureUrl}
+                    alt="Profile"
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <span className="text-white font-semibold text-sm">
+                    {(profile?.name || user?.name || "U").charAt(0).toUpperCase()}
+                  </span>
+                )}
               </div>
-              <div className="hidden sm:flex flex-col min-w-0">
+              <div className="hidden sm:flex flex-col min-w-0 text-left">
                 <span className="text-sm font-semibold text-white truncate">
                   {profile?.name || user?.name}
                 </span>
@@ -230,7 +255,7 @@ const Home = () => {
                 </span>
               </div>
               <button
-                onClick={handleLogout}
+                onClick={(e) => { e.stopPropagation(); handleLogout(); }}
                 className="ml-2 px-4 py-1.5 text-sm rounded-full bg-red-900/40 hover:bg-red-900/60 text-white transition-all border border-red-900/20"
               >
                 Logout
