@@ -25,12 +25,12 @@ const Home = () => {
     name: data?.fullName || data?.name,
     email: data?.email,
     phoneNumber: data?.phoneNumber,
-    profilePictureUrl: data?.profilePictureUrl || data?.avatarUrl,
+    profilePictureUrl: data?.profilePictureUrl || data?.profilePicture || data?.avatarUrl,
   });
 
-  const fetchCurrentUser = async () => {
+  const fetchCurrentUser = async (userId) => {
     try {
-      const apiUser = await userService.getMe();
+      const apiUser = await userService.getProfile(userId);
       const normalizedUser = normalizeUser(apiUser);
       setUser(normalizedUser);
       setProfile(normalizedUser);
@@ -63,12 +63,18 @@ const Home = () => {
         const cachedUser = JSON.parse(userStr);
         setUser(cachedUser);
         setProfile(cachedUser);
+        if (cachedUser?.id) {
+          fetchCurrentUser(cachedUser.id);
+          return;
+        }
       }
     } catch (error) {
       console.error("Error parsing user:", error);
     }
 
-    fetchCurrentUser();
+    console.log("Missing cached user id, redirecting to login");
+    authService.logout();
+    navigate("/");
   }, [navigate]);
 
 

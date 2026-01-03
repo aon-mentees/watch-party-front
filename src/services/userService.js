@@ -5,6 +5,11 @@ const normalizeResponse = (responseData) => {
 };
 
 const userService = {
+  getProfile: async (userId) => {
+    const response = await apiClient.get(`/api/v1/profiles/${userId}`);
+    return normalizeResponse(response.data);
+  },
+
   getMe: async () => {
     const response = await apiClient.get('/api/v1/users/me');
     return normalizeResponse(response.data);
