@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import apiClient from "../config/api";
+import Icon from "../components/Icon";
 
 const UploadVideo = () => {
   const navigate = useNavigate();
@@ -59,7 +60,9 @@ const UploadVideo = () => {
       });
 
       console.log("Video uploaded successfully:", response.data);
-      toast.success("🎉 Video uploaded successfully!");
+      toast.success("Video uploaded successfully!", {
+        icon: <Icon name="party" className="w-5 h-5 text-[#fbb034]" strokeWidth={2} />,
+      });
       
       setTimeout(() => {
         navigate("/home");
@@ -113,8 +116,8 @@ const UploadVideo = () => {
       {/* Main Content */}
       <main className="relative z-10 max-w-2xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 mb-4">
-            <span className="text-5xl">🎬</span>
+          <div className="inline-flex items-center gap-3 mb-4">
+            <Icon name="clapper" className="w-12 h-12 text-white" strokeWidth={2} />
             <h2 className="text-4xl font-bold">Upload Video</h2>
           </div>
           <p className="text-xl text-white/75">
@@ -159,7 +162,7 @@ const UploadVideo = () => {
                   className="block w-full px-4 py-3 bg-[#1a1520] border-2 border-dashed border-red-900/40 rounded-lg text-white text-center cursor-pointer hover:border-red-500/60 transition-colors disabled:opacity-50"
                 >
                   <div className="flex flex-col items-center gap-2">
-                    <span className="text-3xl">📹</span>
+                    <Icon name="video" className="w-8 h-8" strokeWidth={2} />
                     <span>
                       {videoFile
                         ? videoFile.name
@@ -202,12 +205,12 @@ const UploadVideo = () => {
             >
               {loading ? (
                 <span className="flex items-center justify-center gap-2">
-                  <span className="animate-spin">🔄</span>
+                  <Icon name="spinner" className="w-5 h-5 animate-spin" strokeWidth={2} />
                   Uploading...
                 </span>
               ) : (
                 <span className="flex items-center justify-center gap-2">
-                  <span>📤</span>
+                  <Icon name="upload" className="w-5 h-5" strokeWidth={2} />
                   Upload Video
                 </span>
               )}
@@ -228,14 +231,18 @@ const UploadVideo = () => {
         {/* Info Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-12">
           <div className="bg-[#0d0a12] border border-red-900/20 rounded-2xl p-6 hover:border-red-500/40 transition-all">
-            <div className="text-4xl mb-4">✅</div>
+            <div className="text-4xl mb-4 text-white">
+              <Icon name="check" className="w-10 h-10" strokeWidth={2} />
+            </div>
             <h3 className="text-xl font-semibold mb-2">Easy Upload</h3>
             <p className="text-white/70">
               Upload your videos in seconds and start sharing with friends.
             </p>
           </div>
           <div className="bg-[#0d0a12] border border-red-900/20 rounded-2xl p-6 hover:border-red-500/40 transition-all">
-            <div className="text-4xl mb-4">🔒</div>
+            <div className="text-4xl mb-4 text-white">
+              <Icon name="lock" className="w-10 h-10" strokeWidth={2} />
+            </div>
             <h3 className="text-xl font-semibold mb-2">Secure</h3>
             <p className="text-white/70">
               Your videos are securely stored and only accessible to you and your friends.
@@ -248,7 +255,11 @@ const UploadVideo = () => {
       <footer className="relative z-10 mt-12 border-t border-red-900/20 bg-[#0d0a12]/80 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <p className="text-center text-white/50 text-sm">
-            © 2026 Watch Party. Made with ❤️ for movie lovers.
+            © 2026 Watch Party. Made with
+            <span className="inline-flex items-center align-middle px-1">
+              <Icon name="heart" className="w-4 h-4 text-red-400" strokeWidth={2} />
+            </span>
+            for movie lovers.
           </p>
         </div>
       </footer>

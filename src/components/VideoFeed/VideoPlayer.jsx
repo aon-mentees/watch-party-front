@@ -2,6 +2,7 @@ import React, { useEffect, useState } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import apiClient from "../../config/api";
+import Icon from "../Icon";
 
 const VideoPlayer = () => {
   const navigate = useNavigate();
@@ -27,7 +28,9 @@ const VideoPlayer = () => {
       const filename = video.videoUrl.split('/').pop();
       await apiClient.delete(`/api/v1/videos/${filename}`);
       console.log("Video deleted successfully");
-      toast.success("🗑️ Video deleted successfully!");
+      toast.success("Video deleted successfully!", {
+        icon: <Icon name="trash" className="w-5 h-5" strokeWidth={2} />,
+      });
       
       // Redirect back to home after deletion
       setTimeout(() => {
@@ -44,7 +47,9 @@ const VideoPlayer = () => {
     return (
       <div className="min-h-screen bg-linear-to-br from-[#0f0c15] via-[#1a1520] to-[#0f0c15] flex items-center justify-center">
         <div className="text-white text-center">
-          <div className="text-4xl mb-4">🎬</div>
+          <div className="text-4xl mb-4 text-white">
+            <Icon name="clapper" className="w-10 h-10" strokeWidth={2} />
+          </div>
           <p>Loading...</p>
         </div>
       </div>
@@ -115,9 +120,10 @@ const VideoPlayer = () => {
             <button
               onClick={() => setShowDeleteConfirm(true)}
               disabled={deleting}
-              className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity shadow-lg font-semibold"
+              className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity shadow-lg font-semibold flex items-center gap-2"
             >
-              {deleting ? "🗑️ Deleting..." : "🗑️ Delete Video"}
+              <Icon name="trash" className="w-5 h-5" strokeWidth={2} />
+              <span>{deleting ? "Deleting..." : "Delete Video"}</span>
             </button>
           </div>
         </div>
@@ -125,21 +131,27 @@ const VideoPlayer = () => {
         {/* Features Section */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
           <div className="bg-[#0d0a12] border border-red-900/20 rounded-2xl p-6 hover:border-red-500/40 transition-all">
-            <div className="text-4xl mb-4">💬</div>
+            <div className="text-4xl mb-4 text-white">
+              <Icon name="chat" className="w-10 h-10" strokeWidth={2} />
+            </div>
             <h3 className="text-xl font-semibold mb-2">Live Chat</h3>
             <p className="text-white/70 text-sm">
               Chat with friends watching the same video in real-time.
             </p>
           </div>
           <div className="bg-[#0d0a12] border border-red-900/20 rounded-2xl p-6 hover:border-red-500/40 transition-all">
-            <div className="text-4xl mb-4">🎭</div>
+            <div className="text-4xl mb-4 text-white">
+              <Icon name="drama" className="w-10 h-10" strokeWidth={2} />
+            </div>
             <h3 className="text-xl font-semibold mb-2">Sync Playback</h3>
             <p className="text-white/70 text-sm">
               Everyone's player stays synchronized automatically.
             </p>
           </div>
           <div className="bg-[#0d0a12] border border-red-900/20 rounded-2xl p-6 hover:border-red-500/40 transition-all">
-            <div className="text-4xl mb-4">👥</div>
+            <div className="text-4xl mb-4 text-white">
+              <Icon name="users" className="w-10 h-10" strokeWidth={2} />
+            </div>
             <h3 className="text-xl font-semibold mb-2">Invite Friends</h3>
             <p className="text-white/70 text-sm">
               Share the party link with friends to watch together.
@@ -152,7 +164,9 @@ const VideoPlayer = () => {
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className="bg-[#0d0a12] border border-red-900/20 rounded-2xl p-8 max-w-md w-full">
               <div className="text-center mb-6">
-                <div className="text-6xl mb-4">⚠️</div>
+                <div className="text-6xl mb-4 text-yellow-400 flex justify-center">
+                  <Icon name="warning" className="w-14 h-14" strokeWidth={2} />
+                </div>
                 <h2 className="text-2xl font-bold text-white mb-2">Delete Video?</h2>
                 <p className="text-white/70 mb-4">
                   Are you sure you want to delete this video? This action cannot be undone.
@@ -187,7 +201,11 @@ const VideoPlayer = () => {
       <footer className="relative z-10 mt-12 border-t border-red-900/20 bg-[#0d0a12]/80 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <p className="text-center text-white/50 text-sm">
-            © 2026 Watch Party. Made with ❤️ for movie lovers.
+            © 2026 Watch Party. Made with
+            <span className="inline-flex items-center align-middle px-1">
+              <Icon name="heart" className="w-4 h-4 text-red-400" strokeWidth={2} />
+            </span>
+            for movie lovers.
           </p>
         </div>
       </footer>

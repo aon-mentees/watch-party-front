@@ -33,7 +33,7 @@ const authService = {
       localStorage.setItem('authToken', token);
       localStorage.setItem('currentUser', JSON.stringify(user));
       
-      console.log("✅ Signup success - Data saved to localStorage");
+      console.log("Signup success - data saved to localStorage");
       console.log("Token:", token.substring(0, 50) + "...");
       console.log("User:", user);
 
@@ -74,7 +74,7 @@ const authService = {
       localStorage.setItem('authToken', token);
       localStorage.setItem('currentUser', JSON.stringify(user));
       
-      console.log("✅ SignIn success - Data saved to localStorage");
+      console.log("SignIn success - data saved to localStorage");
       console.log("Token:", token.substring(0, 50) + "...");
       console.log("User:", user);
 

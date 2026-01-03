@@ -2,6 +2,7 @@ import React, { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import authService from "../../services/authService";
+import Icon from "../Icon";
 
 const MobileAuthForm = ({ isSignup }) => {
   const navigate = useNavigate();
@@ -27,14 +28,18 @@ const MobileAuthForm = ({ isSignup }) => {
     try {
       if (isSignup) {
         if (!formData.fullName || !formData.phoneNumber || !formData.email || !formData.password) {
-          toast.error("❌ All fields are required!");
+          toast.error("All fields are required!", {
+            icon: <Icon name="close" className="w-5 h-5" strokeWidth={2} />,
+          });
           setLoading(false);
           return;
         }
         
         const phoneRegex = /^[\d\s\-+()]{10,}$/;
         if (!phoneRegex.test(formData.phoneNumber)) {
-          toast.error("❌ Please enter a valid phone number!");
+          toast.error("Please enter a valid phone number!", {
+            icon: <Icon name="warning" className="w-5 h-5 text-[#fbb034]" strokeWidth={2} />,
+          });
           setLoading(false);
           return;
         }
@@ -47,7 +52,9 @@ const MobileAuthForm = ({ isSignup }) => {
         });
         
         console.log("SignUp success:", result);
-        toast.success(`🎬 Welcome ${formData.fullName}! Account created successfully!`);
+        toast.success(`Welcome ${formData.fullName}! Account created successfully!`, {
+          icon: <Icon name="clapper" className="w-5 h-5 text-[#fbb034]" strokeWidth={2} />,
+        });
         
         setFormData({
           fullName: "",
@@ -58,7 +65,9 @@ const MobileAuthForm = ({ isSignup }) => {
         setLoading(false);
       } else {
         if (!formData.email || !formData.password) {
-          toast.error("❌ Email and password are required!");
+          toast.error("Email and password are required!", {
+            icon: <Icon name="close" className="w-5 h-5" strokeWidth={2} />,
+          });
           setLoading(false);
           return;
         }
@@ -69,7 +78,9 @@ const MobileAuthForm = ({ isSignup }) => {
         
         console.log("SignIn success:", result);
         const userName = result.user?.fullName || result.user?.email || "User";
-        toast.success(`🍿 Welcome back, ${userName}!`);
+        toast.success(`Welcome back, ${userName}!`, {
+          icon: <Icon name="popcorn" className="w-5 h-5 text-[#fbb034]" strokeWidth={2} />,
+        });
         
         setFormData({
           fullName: "",
@@ -85,7 +96,9 @@ const MobileAuthForm = ({ isSignup }) => {
       }, 1500);
     } catch (err) {
       console.error("Auth error:", err);
-      toast.error(`❌ ${err.message}`);
+      toast.error(err.message, {
+        icon: <Icon name="warning" className="w-5 h-5 text-[#fbb034]" strokeWidth={2} />,
+      });
       setLoading(false);
     }
   };
@@ -100,8 +113,13 @@ const MobileAuthForm = ({ isSignup }) => {
         </div>
       </div>
 
-      <h2 className="text-xl font-medium text-white text-center mb-2">
-        {isSignup ? "Create Account 🎬" : "Sign In 🍿"}
+      <h2 className="text-xl font-medium text-white text-center mb-2 flex items-center justify-center gap-2">
+        <Icon
+          name={isSignup ? "clapper" : "popcorn"}
+          className="w-5 h-5 text-white"
+          strokeWidth={2}
+        />
+        <span>{isSignup ? "Create Account" : "Sign In"}</span>
       </h2>
 
       <div className="flex flex-col items-center gap-3 w-full max-w-sm">

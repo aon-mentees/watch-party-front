@@ -1,5 +1,6 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import Icon from "../components/Icon";
 
 const NotFound = () => {
   const navigate = useNavigate();
@@ -32,7 +33,7 @@ const NotFound = () => {
         {[...Array(15)].map((_, i) => (
           <div
             key={i}
-            className="absolute text-4xl animate-float"
+            className="absolute animate-float"
             style={{
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
@@ -42,7 +43,7 @@ const NotFound = () => {
               animationDuration: `${8 + Math.random() * 4}s`,
             }}
           >
-            🍿
+            <Icon name="popcorn" className="w-10 h-10 text-white" strokeWidth={2} />
           </div>
         ))}
       </div>
@@ -52,7 +53,9 @@ const NotFound = () => {
         {/* Broken Film Icon */}
         <div className="mb-8 flex justify-center">
           <div className="relative">
-            <div className="text-9xl opacity-20">🎬</div>
+            <div className="text-9xl opacity-20 text-white">
+              <Icon name="clapper" className="w-32 h-32" strokeWidth={2} />
+            </div>
             <div className="absolute inset-0 flex items-center justify-center">
               <div className="text-6xl font-bold bg-linear-to-br from-[#c41e3a] via-[#d4145a] to-[#fbb034] bg-clip-text text-transparent">
                 404
@@ -97,7 +100,10 @@ const NotFound = () => {
 
         {/* Fun Message */}
         <p className="mt-12 text-sm text-white/50">
-          🎭 Maybe try searching for something else? The show must go on!
+          <span className="inline-flex items-center gap-2">
+            <Icon name="drama" className="w-4 h-4" strokeWidth={2} />
+            <span>Maybe try searching for something else? The show must go on!</span>
+          </span>
         </p>
       </div>
     </div>

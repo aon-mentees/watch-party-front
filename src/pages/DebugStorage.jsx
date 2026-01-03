@@ -1,4 +1,5 @@
 import React from "react";
+import Icon from "../components/Icon";
 
 const DebugStorage = () => {
   const checkStorage = () => {
@@ -32,7 +33,10 @@ const DebugStorage = () => {
   return (
     <div className="min-h-screen bg-gray-900 text-white p-8">
       <div className="max-w-2xl mx-auto">
-        <h1 className="text-3xl font-bold mb-6">🔍 LocalStorage Debug</h1>
+        <h1 className="text-3xl font-bold mb-6 flex items-center gap-3">
+          <Icon name="search" className="w-7 h-7" strokeWidth={2} />
+          <span>LocalStorage Debug</span>
+        </h1>
         
         <div className="bg-gray-800 rounded-lg p-6 mb-6">
           <h2 className="text-xl font-semibold mb-4">Storage Status:</h2>
@@ -55,15 +59,17 @@ const DebugStorage = () => {
         <div className="flex gap-4">
           <button
             onClick={handleRefresh}
-            className="px-6 py-2 bg-blue-600 rounded-lg hover:bg-blue-700 transition"
+            className="px-6 py-2 bg-blue-600 rounded-lg hover:bg-blue-700 transition flex items-center gap-2"
           >
-            🔄 Refresh
+            <Icon name="spinner" className="w-5 h-5" strokeWidth={2} />
+            <span>Refresh</span>
           </button>
           <button
             onClick={handleClear}
-            className="px-6 py-2 bg-red-600 rounded-lg hover:bg-red-700 transition"
+            className="px-6 py-2 bg-red-600 rounded-lg hover:bg-red-700 transition flex items-center gap-2"
           >
-            🗑️ Clear Storage
+            <Icon name="trash" className="w-5 h-5" strokeWidth={2} />
+            <span>Clear Storage</span>
           </button>
         </div>
       </div>

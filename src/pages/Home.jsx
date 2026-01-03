@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import authService from "../services/authService";
 import apiClient from "../config/api";
+import Icon from "../components/Icon";
 
 const Home = () => {
   const navigate = useNavigate();
@@ -24,8 +25,8 @@ const Home = () => {
     const token = localStorage.getItem("authToken");
     const userStr = localStorage.getItem("currentUser");
     
-    console.log("Token from localStorage:", token ? "✅ Found" : "❌ Not found");
-    console.log("User from localStorage:", userStr ? "✅ Found" : "❌ Not found");
+    console.log("Token from localStorage:", token ? "Found" : "Not found");
+    console.log("User from localStorage:", userStr ? "Found" : "Not found");
     
     if (!token || !userStr) {
       console.log("User not authenticated, redirecting to login...");
@@ -140,7 +141,9 @@ const Home = () => {
 
   const handleLogout = () => {
     authService.logout();
-    toast.info("👋 Logged out successfully. See you next time!");
+    toast.info("Logged out successfully. See you next time!", {
+      icon: <Icon name="wave" className="w-5 h-5" strokeWidth={2} />,
+    });
     setTimeout(() => {
       navigate("/");
     }, 1000);
@@ -150,7 +153,9 @@ const Home = () => {
     return (
       <div className="min-h-screen bg-linear-to-br from-[#0f0c15] via-[#1a1520] to-[#0f0c15] flex items-center justify-center">
         <div className="text-white text-center">
-          <div className="text-4xl mb-4">🎬</div>
+          <div className="text-4xl mb-4 text-white">
+            <Icon name="clapper" className="w-10 h-10" strokeWidth={2} />
+          </div>
           <p>Loading...</p>
         </div>
       </div>
@@ -181,7 +186,7 @@ const Home = () => {
         {[...Array(15)].map((_, i) => (
           <div
             key={i}
-            className="absolute text-4xl animate-float"
+            className="absolute animate-float"
             style={{
               left: `${Math.random() * 100}%`,
               top: `${Math.random() * 100}%`,
@@ -191,7 +196,7 @@ const Home = () => {
               animationDuration: `${8 + Math.random() * 4}s`,
             }}
           >
-            🍿
+            <Icon name="popcorn" className="w-10 h-10 text-white" strokeWidth={2} />
           </div>
         ))}
       </div>
@@ -239,12 +244,12 @@ const Home = () => {
       <main className="relative z-10 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Welcome Section */}
         <div className="text-center mb-12">
-          <div className="inline-flex items-center gap-2 mb-4">
-            <span className="text-5xl">🎬</span>
+          <div className="inline-flex items-center gap-3 mb-4 flex-wrap justify-center">
+            <Icon name="clapper" className="w-12 h-12 text-white" strokeWidth={2} />
             <h2 className="text-4xl md:text-5xl font-bold">
               Welcome Back, {profile?.name || user?.name}!
             </h2>
-            <span className="text-5xl">🍿</span>
+            <Icon name="popcorn" className="w-12 h-12 text-white" strokeWidth={2} />
           </div>
           <p className="text-xl text-white/75 max-w-2xl mx-auto">
             Host amazing watch parties with your friends. Stream together, chat together, enjoy together.
@@ -260,7 +265,9 @@ const Home = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
           {/* Card 1 */}
           <div className="bg-[#0d0a12] border border-red-900/20 rounded-2xl p-6 hover:border-red-500/40 transition-all hover:shadow-[0_0_30px_rgba(196,30,58,0.3)]">
-            <div className="text-4xl mb-4">🎥</div>
+            <div className="text-4xl mb-4 text-white">
+              <Icon name="clapper" className="w-10 h-10" strokeWidth={2} />
+            </div>
             <h3 className="text-xl font-semibold mb-2">Create Party</h3>
             <p className="text-white/70">
               Start a new watch party and invite your friends to join the fun.
@@ -269,7 +276,9 @@ const Home = () => {
 
           {/* Card 2 */}
           <div className="bg-[#0d0a12] border border-red-900/20 rounded-2xl p-6 hover:border-red-500/40 transition-all hover:shadow-[0_0_30px_rgba(196,30,58,0.3)]">
-            <div className="text-4xl mb-4">💬</div>
+            <div className="text-4xl mb-4 text-white">
+              <Icon name="chat" className="w-10 h-10" strokeWidth={2} />
+            </div>
             <h3 className="text-xl font-semibold mb-2">Live Chat</h3>
             <p className="text-white/70">
               Chat with your friends in real-time while watching together.
@@ -278,7 +287,9 @@ const Home = () => {
 
           {/* Card 3 */}
           <div className="bg-[#0d0a12] border border-red-900/20 rounded-2xl p-6 hover:border-red-500/40 transition-all hover:shadow-[0_0_30px_rgba(196,30,58,0.3)]">
-            <div className="text-4xl mb-4">🎭</div>
+            <div className="text-4xl mb-4 text-white">
+              <Icon name="drama" className="w-10 h-10" strokeWidth={2} />
+            </div>
             <h3 className="text-xl font-semibold mb-2">Sync Playback</h3>
             <p className="text-white/70">
               Everyone stays in sync. Pause, play, and rewind together.
@@ -297,7 +308,9 @@ const Home = () => {
           {loading ? (
             <div className="flex justify-center items-center h-64">
               <div className="text-center">
-                <div className="text-4xl mb-4">🎬</div>
+                <div className="text-4xl mb-4 text-white">
+                  <Icon name="clapper" className="w-10 h-10" strokeWidth={2} />
+                </div>
                 <p className="text-white/70">Loading videos...</p>
               </div>
             </div>
@@ -334,8 +347,14 @@ const Home = () => {
                         <span className="text-white/50">By:</span> {video.ownerFullName}
                       </p>
                       <div className="flex flex-col gap-2 text-xs text-white/50">
-                        <span>📅 {new Date(video.timestamp).toLocaleDateString()}</span>
-                        <span>🕒 {new Date(video.timestamp).toLocaleTimeString()}</span>
+                        <span className="flex items-center gap-1">
+                          <Icon name="calendar" className="w-4 h-4" strokeWidth={2} />
+                          {new Date(video.timestamp).toLocaleDateString()}
+                        </span>
+                        <span className="flex items-center gap-1">
+                          <Icon name="clock" className="w-4 h-4" strokeWidth={2} />
+                          {new Date(video.timestamp).toLocaleTimeString()}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -388,7 +407,11 @@ const Home = () => {
       <footer className="relative z-10 mt-12 border-t border-red-900/20 bg-[#0d0a12]/80 backdrop-blur-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
           <p className="text-center text-white/50 text-sm">
-            © 2026 Watch Party. Made with ❤️ for movie lovers.
+            © 2026 Watch Party. Made with
+            <span className="inline-flex items-center align-middle px-1">
+              <Icon name="heart" className="w-4 h-4 text-red-400" strokeWidth={2} />
+            </span>
+            for movie lovers.
           </p>
         </div>
       </footer>
