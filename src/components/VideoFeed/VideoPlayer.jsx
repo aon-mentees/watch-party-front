@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import apiClient from "../../config/api";
@@ -7,11 +7,13 @@ import Icon from "../Icon";
 const VideoPlayer = () => {
   const navigate = useNavigate();
   const location = useLocation();
+  const videoRef = useRef(null);
   const [video, setVideo] = useState(null);
   const [currentUser, setCurrentUser] = useState(null);
   const [isOwner, setIsOwner] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [duration, setDuration] = useState(0);
   const videoData = location.state?.video;
 
   useEffect(() => {
@@ -41,6 +43,17 @@ const VideoPlayer = () => {
     const isVideoOwner = video.userId && currentUser.id && Number(video.userId) === Number(currentUser.id);
     setIsOwner(isVideoOwner);
   }, [video, currentUser]);
+
+  const handleLoadedMetadata = (e) => {
+    setDuration(e.target.duration);
+  };
+
+  const formatDuration = (seconds) => {
+    if (!seconds || isNaN(seconds)) return "0:00";
+    const minutes = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${minutes}:${secs.toString().padStart(2, "0")}`;
+  };
 
   const handleDeleteVideo = async () => {
     if (!isOwner) {
@@ -108,8 +121,10 @@ const VideoPlayer = () => {
         <div className="mb-8">
           <div className="bg-[#0d0a12] border border-red-900/20 rounded-2xl overflow-hidden shadow-[0_0_50px_rgba(196,30,58,0.3)]">
             <video
+              ref={videoRef}
               controls
               autoPlay
+              onLoadedMetadata={handleLoadedMetadata}
               className="w-full h-auto"
               style={{ maxHeight: "600px" }}
             >
@@ -128,7 +143,7 @@ const VideoPlayer = () => {
               <p className="text-white/70 mb-2">
                 <span className="text-white/50">Uploaded by:</span> {video.ownerFullName}
               </p>
-              <p className="text-white/70">
+              <p className="text-white/70 mb-2">
                 <span className="text-white/50">Uploaded on:</span> {new Date(video.timestamp).toLocaleDateString()} at{" "}
                 {new Date(video.timestamp).toLocaleTimeString()}
               </p>

@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useRef } from "react";
 import { useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import authService from "../services/authService";
@@ -13,6 +13,7 @@ const Home = () => {
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [videoDurations, setVideoDurations] = useState({});
   const [pagination, setPagination] = useState({
     size: 6,
     number: 0,
@@ -125,6 +126,20 @@ const Home = () => {
 
   const handleWatchVideo = (video) => {
     navigate("/watch", { state: { video } });
+  };
+
+  const formatDuration = (seconds) => {
+    if (!seconds || isNaN(seconds)) return "0:00";
+    const minutes = Math.floor(seconds / 60);
+    const secs = Math.floor(seconds % 60);
+    return `${minutes}:${secs.toString().padStart(2, "0")}`;
+  };
+
+  const handleVideoLoadedMetadata = (videoUrl, e) => {
+    setVideoDurations((prev) => ({
+      ...prev,
+      [videoUrl]: e.target.duration,
+    }));
   };
 
   const fetchVideos = async (pageNumber = 0) => {
@@ -360,6 +375,7 @@ const Home = () => {
                         className="w-full h-full object-cover"
                         onLoadedMetadata={(e) => {
                           e.target.currentTime = 1;
+                          handleVideoLoadedMetadata(video.videoUrl, e);
                         }}
                       />
                       <div className="absolute inset-0 bg-black/30 group-hover:bg-black/20 transition-all flex items-center justify-center">
@@ -371,6 +387,11 @@ const Home = () => {
                           <polygon points="5 3 19 12 5 21" />
                         </svg>
                       </div>
+                      {videoDurations[video.videoUrl] && (
+                        <div className="absolute bottom-2 right-2 bg-black/70 px-2 py-1 rounded text-sm font-semibold text-white">
+                          {formatDuration(videoDurations[video.videoUrl])}
+                        </div>
+                      )}
                     </div>
                     <div className="p-4">
                       <h3 className="font-semibold text-lg mb-2 line-clamp-2">{video.videoName}</h3>
