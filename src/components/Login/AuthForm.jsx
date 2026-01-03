@@ -76,7 +76,7 @@ const AuthForm = ({ type, active, title, isSignup }) => {
         setLoading(false);
         
         setTimeout(() => {
-          navigate("/home");
+          navigate("/", { state: { mode: "signin", fromSignup: true } });
         }, 1500);
       } else {
         // Sign In

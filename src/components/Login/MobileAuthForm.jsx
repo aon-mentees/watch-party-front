@@ -26,6 +26,10 @@ const MobileAuthForm = ({ isSignup }) => {
     setLoading(true);
 
     try {
+      const nextRoute = isSignup
+        ? { path: "/", state: { mode: "signin", fromSignup: true } }
+        : { path: "/home", state: undefined };
+
       if (isSignup) {
         if (!formData.fullName || !formData.phoneNumber || !formData.email || !formData.password) {
           toast.error("All fields are required!", {
@@ -92,7 +96,7 @@ const MobileAuthForm = ({ isSignup }) => {
       }
 
       setTimeout(() => {
-        navigate("/home");
+        navigate(nextRoute.path, { state: nextRoute.state });
       }, 1500);
     } catch (err) {
       console.error("Auth error:", err);

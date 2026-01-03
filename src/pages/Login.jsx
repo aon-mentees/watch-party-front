@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
+import { useLocation } from "react-router-dom";
 import Hero from "../components/Login/Hero";
 import AuthForm from "../components/Login/AuthForm";
 import MobileAuthForm from "../components/Login/MobileAuthForm";
@@ -8,6 +9,13 @@ import "../assets/styles/Login/animations.css";
 
 function Login() {
   const [view, setView] = useState("signup");
+  const location = useLocation();
+
+  useEffect(() => {
+    if (location.state?.mode === "signin") {
+      setView("signin");
+    }
+  }, [location.state]);
 
   const isSignup = view === "signup";
   const toggleView = () => setView(isSignup ? "signin" : "signup");

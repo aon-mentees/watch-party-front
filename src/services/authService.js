@@ -25,17 +25,17 @@ const authService = {
         phoneNumber: responseData.phoneNumber,
       };
 
-      if (!token) {
-        console.error("Missing token in response:", responseData);
-        throw new Error('Invalid response: missing token');
-      }
+      // if (!token) {
+      //   console.error("Missing token in response:", responseData);
+      //   throw new Error('Invalid response: missing token');
+      // }
 
       localStorage.setItem('authToken', token);
       localStorage.setItem('currentUser', JSON.stringify(user));
       
       console.log("Signup success - data saved to localStorage");
-      console.log("Token:", token.substring(0, 50) + "...");
-      console.log("User:", user);
+      // console.log("Token:", token.substring(0, 50) + "...");
+      // console.log("User:", user);
 
       return { token, user };
     } catch (error) {
