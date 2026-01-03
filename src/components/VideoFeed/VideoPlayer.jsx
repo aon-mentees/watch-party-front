@@ -8,6 +8,8 @@ const VideoPlayer = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const [video, setVideo] = useState(null);
+  const [currentUser, setCurrentUser] = useState(null);
+  const [isOwner, setIsOwner] = useState(false);
   const [deleting, setDeleting] = useState(false);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const videoData = location.state?.video;
@@ -19,9 +21,33 @@ const VideoPlayer = () => {
       return;
     }
     setVideo(videoData);
+    const storedUser = localStorage.getItem("currentUser");
+    if (storedUser) {
+      try {
+        setCurrentUser(JSON.parse(storedUser));
+      } catch (error) {
+        console.error("Error parsing current user:", error);
+      }
+    }
   }, [videoData, navigate]);
 
+  useEffect(() => {
+    if (!video || !currentUser) {
+      setIsOwner(false);
+      return;
+    }
+
+    // Simple ownership check: compare userId
+    const isVideoOwner = video.userId && currentUser.id && Number(video.userId) === Number(currentUser.id);
+    setIsOwner(isVideoOwner);
+  }, [video, currentUser]);
+
   const handleDeleteVideo = async () => {
+    if (!isOwner) {
+      toast.error("You can only delete your own videos");
+      return;
+    }
+
     setDeleting(true);
     try {
       // Extract filename from videoUrl
@@ -117,14 +143,16 @@ const VideoPlayer = () => {
             >
               Back to Videos
             </button>
-            <button
-              onClick={() => setShowDeleteConfirm(true)}
-              disabled={deleting}
-              className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity shadow-lg font-semibold flex items-center gap-2"
-            >
-              <Icon name="trash" className="w-5 h-5" strokeWidth={2} />
-              <span>{deleting ? "Deleting..." : "Delete Video"}</span>
-            </button>
+            {isOwner && (
+              <button
+                onClick={() => setShowDeleteConfirm(true)}
+                disabled={deleting}
+                className="px-6 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-opacity shadow-lg font-semibold flex items-center gap-2"
+              >
+                <Icon name="trash" className="w-5 h-5" strokeWidth={2} />
+                <span>{deleting ? "Deleting..." : "Delete Video"}</span>
+              </button>
+            )}
           </div>
         </div>
 
@@ -160,7 +188,7 @@ const VideoPlayer = () => {
         </div>
 
         {/* Delete Confirmation Modal */}
-        {showDeleteConfirm && (
+        {showDeleteConfirm && isOwner && (
           <div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
             <div className="bg-[#0d0a12] border border-red-900/20 rounded-2xl p-8 max-w-md w-full">
               <div className="text-center mb-6">
