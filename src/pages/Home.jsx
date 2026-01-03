@@ -7,6 +7,7 @@ import apiClient from "../config/api";
 const Home = () => {
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
+  const [profile, setProfile] = useState(null);
   const [videos, setVideos] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
@@ -36,6 +37,12 @@ const Home = () => {
       const currentUser = JSON.parse(userStr);
       console.log("User data parsed successfully:", currentUser);
       setUser(currentUser);
+      
+      const userId = currentUser.sub || currentUser.userId || currentUser.id;
+      console.log("Fetching profile for userId:", userId);
+      if (userId) {
+        fetchUserProfile(userId);
+      }
     } catch (error) {
       console.error("Error parsing user:", error);
       localStorage.removeItem("authToken");
@@ -43,6 +50,17 @@ const Home = () => {
       navigate("/");
     }
   }, [navigate]);
+
+  const fetchUserProfile = async (userId) => {
+    try {
+      console.log("Making API call to /api/v1/profiles/" + userId);
+      const response = await apiClient.get(`/api/v1/profiles/${userId}`);
+      console.log("Profile fetched successfully:", response.data);
+      setProfile(response.data);
+    } catch (err) {
+      console.error("Error fetching profile:", err);
+    }
+  };
 
   useEffect(() => {
     const fetchVideos = async (pageNumber = 0) => {
@@ -190,11 +208,25 @@ const Home = () => {
                 Watch Party
               </h1>
             </div>
-            <div className="flex items-center gap-4">
-              <span className="text-sm text-white/70">Welcome, {user.name}!</span>
+            
+            {/* Profile Card */}
+            <div className="flex items-center gap-4 rounded-full px-4 py-2 transition-all">
+              <div className="w-10 h-10 rounded-full bg-linear-to-br from-[#c41e3a] via-[#d4145a] to-[#fbb034] flex items-center justify-center flex-shrink-0">
+                <span className="text-white font-semibold text-sm">
+                  {(profile?.name || user?.name || "U").charAt(0).toUpperCase()}
+                </span>
+              </div>
+              <div className="hidden sm:flex flex-col min-w-0">
+                <span className="text-sm font-semibold text-white truncate">
+                  {profile?.name || user?.name}
+                </span>
+                <span className="text-xs text-white/50 truncate">
+                  {profile?.email || user?.email}
+                </span>
+              </div>
               <button
                 onClick={handleLogout}
-                className="px-6 py-2 rounded-full bg-linear-to-br from-[#c41e3a] via-[#d4145a] to-[#fbb034] text-white hover:opacity-90 transition-opacity shadow-lg shadow-red-500/30"
+                className="ml-2 px-4 py-1.5 text-sm rounded-full bg-red-900/40 hover:bg-red-900/60 text-white transition-all border border-red-900/20"
               >
                 Logout
               </button>
@@ -209,12 +241,19 @@ const Home = () => {
         <div className="text-center mb-12">
           <div className="inline-flex items-center gap-2 mb-4">
             <span className="text-5xl">🎬</span>
-            <h2 className="text-4xl md:text-5xl font-bold">Welcome Back, {user.name}!</h2>
+            <h2 className="text-4xl md:text-5xl font-bold">
+              Welcome Back, {profile?.name || user?.name}!
+            </h2>
             <span className="text-5xl">🍿</span>
           </div>
           <p className="text-xl text-white/75 max-w-2xl mx-auto">
             Host amazing watch parties with your friends. Stream together, chat together, enjoy together.
           </p>
+          {profile && (
+            <div className="mt-4 text-sm text-white/50">
+              <p>{profile.email}</p>
+            </div>
+          )}
         </div>
 
         {/* Feature Cards */}
