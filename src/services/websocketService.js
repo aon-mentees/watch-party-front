@@ -1,5 +1,15 @@
-import { Client } from '@stomp/stompjs';
-import SockJS from 'sockjs-client';
+import { Client } from "@stomp/stompjs";
+import SockJS from "sockjs-client";
+
+function normalizeBaseUrl(url) {
+  if (!url) return "";
+  return url.replace(/\/+$/, "");
+}
+
+function stripApiPath(url) {
+  if (!url) return "";
+  return url.replace(/\/api\/v\d+$/i, "").replace(/\/api\/v\d+\/.*$/i, "");
+}
 
 class WebSocketService {
   constructor() {
@@ -9,31 +19,50 @@ class WebSocketService {
   }
 
   connect(token, onConnected, onError) {
-    const API_URL = import.meta.env.VITE_API_URL;
-    
+    const rawWsBase = import.meta.env.VITE_WS_URL;
+    const rawApiBase = import.meta.env.VITE_API_URL;
+
+    const wsBase =
+      normalizeBaseUrl(rawWsBase) ||
+      normalizeBaseUrl(stripApiPath(rawApiBase)) ||
+      "";
+
+    const wsEndpoint = wsBase ? `${wsBase}/ws` : "/ws";
+
+    const sockJsUrl = `${wsEndpoint}?token=${encodeURIComponent(token)}`;
+
     this.client = new Client({
-      webSocketFactory: () => new SockJS(`${API_URL}/ws`),
+      webSocketFactory: () => new SockJS(sockJsUrl),
+
       connectHeaders: {
         Authorization: `Bearer ${token}`,
       },
-      debug: (str) => {
-        console.log('STOMP Debug:', str);
-      },
+
+      debug: (str) => console.log("[STOMP]", str),
+
       reconnectDelay: 5000,
       heartbeatIncoming: 4000,
       heartbeatOutgoing: 4000,
+
       onConnect: () => {
-        console.log('WebSocket Connected!');
+        console.log("WebSocket Connected!");
         this.connected = true;
-        if (onConnected) onConnected();
+        onConnected?.();
       },
+
       onStompError: (frame) => {
-        console.error('STOMP Error:', frame);
+        console.error("STOMP Error:", frame);
         this.connected = false;
-        if (onError) onError(frame);
+        onError?.(frame);
       },
-      onWebSocketClose: () => {
-        console.log('WebSocket Closed');
+
+      onWebSocketError: (evt) => {
+        console.error("WebSocket Error:", evt);
+        this.connected = false;
+      },
+
+      onWebSocketClose: (evt) => {
+        console.log("WebSocket Closed", evt);
         this.connected = false;
       },
     });
@@ -42,90 +71,65 @@ class WebSocketService {
   }
 
   disconnect() {
-    if (this.client) {
-      Object.keys(this.subscriptions).forEach(key => {
-        this.subscriptions[key].unsubscribe();
-      });
-      this.subscriptions = {};
-      this.client.deactivate();
-      this.connected = false;
-    }
+    if (!this.client) return;
+
+    Object.values(this.subscriptions).forEach((sub) => sub?.unsubscribe?.());
+    this.subscriptions = {};
+
+    this.client.deactivate();
+    this.connected = false;
   }
 
-  // Subscribe to party chat
   subscribeToChat(partyId, callback) {
-    if (!this.connected) {
-      console.error('WebSocket not connected');
-      return null;
-    }
+    if (!this.connected) return null;
 
     const destination = `/topic/chat.${partyId}`;
-    const subscription = this.client.subscribe(destination, (message) => {
-      const data = JSON.parse(message.body);
-      callback(data);
+    const sub = this.client.subscribe(destination, (message) => {
+      callback(JSON.parse(message.body));
     });
 
-    this.subscriptions[`chat-${partyId}`] = subscription;
-    return subscription;
+    this.subscriptions[`chat-${partyId}`] = sub;
+    return sub;
   }
 
-  // Subscribe to sync events (play/pause/seek)
   subscribeToSyncEvents(partyId, callback) {
-    if (!this.connected) {
-      console.error('WebSocket not connected');
-      return null;
-    }
+    if (!this.connected) return null;
 
     const destination = `/topic/party.${partyId}`;
-    const subscription = this.client.subscribe(destination, (message) => {
-      const data = JSON.parse(message.body);
-      callback(data);
+    const sub = this.client.subscribe(destination, (message) => {
+      callback(JSON.parse(message.body));
     });
 
-    this.subscriptions[`sync-${partyId}`] = subscription;
-    return subscription;
+    this.subscriptions[`sync-${partyId}`] = sub;
+    return sub;
   }
 
-  // Subscribe to member events (join/leave)
   subscribeToMemberEvents(callback) {
-    if (!this.connected) {
-      console.error('WebSocket not connected');
-      return null;
-    }
+    if (!this.connected) return null;
 
-    const destination = '/topic/member-events';
-    const subscription = this.client.subscribe(destination, (message) => {
-      const data = JSON.parse(message.body);
-      callback(data);
+    const destination = `/topic/member-events`;
+    const sub = this.client.subscribe(destination, (message) => {
+      callback(JSON.parse(message.body));
     });
 
-    this.subscriptions['member-events'] = subscription;
-    return subscription;
+    this.subscriptions["member-events"] = sub;
+    return sub;
   }
 
-  // Subscribe to errors
   subscribeToErrors(callback) {
-    if (!this.connected) {
-      console.error('WebSocket not connected');
-      return null;
-    }
+    if (!this.connected) return null;
 
-    const destination = '/user/queue/errors';
-    const subscription = this.client.subscribe(destination, (message) => {
-      const error = message.body;
-      callback(error);
+    const destination = `/user/queue/errors`;
+    const sub = this.client.subscribe(destination, (message) => {
+      callback(message.body);
     });
 
-    this.subscriptions['errors'] = subscription;
-    return subscription;
+    this.subscriptions["errors"] = sub;
+    return sub;
   }
 
-  // Send chat message
   sendChatMessage(partyId, content) {
-    if (!this.connected) {
-      console.error('WebSocket not connected');
-      return;
-    }
+    if (!this.connected) return;
 
     this.client.publish({
       destination: `/app/watchParty-chats/${partyId}`,
@@ -133,17 +137,13 @@ class WebSocketService {
     });
   }
 
-  // Send sync event (play/pause/seek/changeVideo)
   sendSyncEvent(partyId, event, videoUrl, videoCurrentTime) {
-    if (!this.connected) {
-      console.error('WebSocket not connected');
-      return;
-    }
+    if (!this.connected) return;
 
     this.client.publish({
       destination: `/app/party/${partyId}`,
       body: JSON.stringify({
-        event, // 'PLAY', 'PAUSE', 'SEEK', 'CHANGE_URL'
+        event,
         videoUrl,
         videoCurrentTime,
         eventDateTime: Date.now(),
@@ -156,6 +156,4 @@ class WebSocketService {
   }
 }
 
-// Export singleton instance
-const websocketService = new WebSocketService();
-export default websocketService;
+export default new WebSocketService();

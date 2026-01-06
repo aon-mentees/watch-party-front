@@ -178,6 +178,11 @@ const PartyRoom = () => {
       return;
     }
 
+    if (!wsConnected) {
+      toast.error("❌ WebSocket not connected");
+      return;
+    }
+
     setVideoUrl(newVideoUrl);
     websocketService.sendSyncEvent(partyId, 'CHANGE_URL', newVideoUrl, 0);
     setNewVideoUrl("");

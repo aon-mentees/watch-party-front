@@ -11,4 +11,17 @@ export default defineConfig({
   define: {
     global: 'window',
   },
+  server: {
+    proxy: {
+      '/api': {
+        target: 'http://16.171.4.170:8081',
+        changeOrigin: true,
+      },
+      '/ws': {
+        target: 'ws://16.171.4.170:8081',
+        ws: true,
+        changeOrigin: true,
+      },
+    },
+  },
 })
