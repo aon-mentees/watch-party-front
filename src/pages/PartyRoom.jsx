@@ -21,6 +21,8 @@ const PartyRoom = () => {
   
   // Track if we should ignore video events (to prevent loops)
   const ignoringEvents = useRef(false);
+  const lastSyncTime = useRef(0);
+  const userInitiated = useRef(false);
 
   useEffect(() => {
     if (!authService.isAuthenticated()) {
@@ -100,47 +102,61 @@ const PartyRoom = () => {
   };
 
   const handleSyncEvent = (event) => {
-    if (!videoRef.current || ignoringEvents.current) return;
+    if (!videoRef.current) return;
 
     ignoringEvents.current = true;
+    lastSyncTime.current = Date.now();
+    userInitiated.current = false;
     
-    switch (event.event) {
-      case 'PLAY':
-        if (videoRef.current.paused) {
-          videoRef.current.currentTime = event.videoCurrentTime || 0;
-          videoRef.current.play().catch(console.error);
+    try {
+      switch (event.event) {
+        case 'PLAY':
+          const playTime = event.videoCurrentTime || 0;
+          if (Math.abs(videoRef.current.currentTime - playTime) > 0.5) {
+            videoRef.current.currentTime = playTime;
+          }
+          if (videoRef.current.paused) {
+            videoRef.current.play().catch(console.error);
+          }
           toast.info(`▶️ ${event.userName} played the video`);
-        }
-        break;
-      
-      case 'PAUSE':
-        if (!videoRef.current.paused) {
-          videoRef.current.currentTime = event.videoCurrentTime || 0;
-          videoRef.current.pause();
+          break;
+        
+        case 'PAUSE':
+          const pauseTime = event.videoCurrentTime || 0;
+          if (Math.abs(videoRef.current.currentTime - pauseTime) > 0.5) {
+            videoRef.current.currentTime = pauseTime;
+          }
+          if (!videoRef.current.paused) {
+            videoRef.current.pause();
+          }
           toast.info(`⏸️ ${event.userName} paused the video`);
-        }
-        break;
-      
-      case 'SEEK':
-        videoRef.current.currentTime = event.videoCurrentTime || 0;
-        toast.info(`⏩ ${event.userName} seeked the video`);
-        break;
-      
-      case 'CHANGE_VIDEO':
-      case 'CHANGE_URL':
-        setVideoUrl(event.videoUrl);
-        toast.info(`🎬 ${event.userName} changed the video`);
-        break;
+          break;
+        
+        case 'SEEK':
+          videoRef.current.currentTime = event.videoCurrentTime || 0;
+          toast.info(`⏩ ${event.userName} seeked the video`);
+          break;
+        
+        case 'CHANGE_VIDEO':
+        case 'CHANGE_URL':
+          setVideoUrl(event.videoUrl);
+          toast.info(`🎬 ${event.userName} changed the video`);
+          break;
+      }
+    } catch (error) {
+      console.error('Sync event error:', error);
     }
 
     setTimeout(() => {
       ignoringEvents.current = false;
-    }, 500);
+      userInitiated.current = false;
+    }, 1500);
   };
 
   const handleVideoPlay = () => {
-    if (ignoringEvents.current || !wsConnected) return;
+    if (!wsConnected || ignoringEvents.current || Date.now() - lastSyncTime.current < 1500) return;
     
+    userInitiated.current = true;
     websocketService.sendSyncEvent(
       partyId,
       'PLAY',
@@ -150,8 +166,9 @@ const PartyRoom = () => {
   };
 
   const handleVideoPause = () => {
-    if (ignoringEvents.current || !wsConnected) return;
+    if (!wsConnected || ignoringEvents.current || Date.now() - lastSyncTime.current < 1500) return;
     
+    userInitiated.current = true;
     websocketService.sendSyncEvent(
       partyId,
       'PAUSE',
@@ -160,8 +177,8 @@ const PartyRoom = () => {
     );
   };
 
-  const handleVideoSeeked = () => {
-    if (ignoringEvents.current || !wsConnected) return;
+  const handleVideoSeeking = () => {
+    if (!wsConnected || ignoringEvents.current || Date.now() - lastSyncTime.current < 1500) return;
     
     websocketService.sendSyncEvent(
       partyId,
@@ -257,7 +274,7 @@ const PartyRoom = () => {
                   className="w-full aspect-video bg-black"
                   onPlay={handleVideoPlay}
                   onPause={handleVideoPause}
-                  onSeeked={handleVideoSeeked}
+                  onSeeking={handleVideoSeeking}
                 />
               ) : (
                 <div className="w-full aspect-video bg-black/50 flex items-center justify-center">
