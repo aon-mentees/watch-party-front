@@ -8,8 +8,9 @@ import DebugStorage from "./pages/DebugStorage";
 import VideoPlayer from "./components/VideoFeed/VideoPlayer";
 import UploadVideo from "./pages/UploadVideo";
 import Profile from "./pages/Profile";
-import './index.css';
+import "./index.css";
 import "./assets/styles/toastCustom.css";
+import PartyRoom from "./pages/PartyRoom.jsx";
 
 const router = createBrowserRouter([
   {
@@ -35,6 +36,10 @@ const router = createBrowserRouter([
   {
     path: "/debug",
     element: <DebugStorage />,
+  },
+  {
+    path: "/party/:partyId",
+    element: <PartyRoom />,
   },
   {
     path: "*",
