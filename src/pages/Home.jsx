@@ -757,7 +757,11 @@ const Home = () => {
       <CreatePartyModal
         isOpen={isCreateModalOpen}
         onClose={() => setIsCreateModalOpen(false)}
-        onCreateSuccess={() => loadParties()}
+        onCreateSuccess={(result) => {
+          if (result?.data?.id) {
+            handleJoinParty(result.data.id);
+          }
+        }}
       />
     </div>
   );
