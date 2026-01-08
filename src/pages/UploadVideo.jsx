@@ -177,7 +177,7 @@ const UploadVideo = () => {
                 </label>
               </div>
               <p className="text-xs text-white/50 mt-2">
-                Supported formats: MP4, WebM, Ogg. Max size: 500MB
+                Supported formats: MP4. Max size: 500MB
               </p>
             </div>
 
@@ -226,28 +226,6 @@ const UploadVideo = () => {
               Cancel
             </button>
           </form>
-        </div>
-
-        {/* Info Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mt-12">
-          <div className="bg-[#0d0a12] border border-red-900/20 rounded-2xl p-6 hover:border-red-500/40 transition-all">
-            <div className="text-4xl mb-4 text-white">
-              <Icon name="check" className="w-10 h-10" strokeWidth={2} />
-            </div>
-            <h3 className="text-xl font-semibold mb-2">Easy Upload</h3>
-            <p className="text-white/70">
-              Upload your videos in seconds and start sharing with friends.
-            </p>
-          </div>
-          <div className="bg-[#0d0a12] border border-red-900/20 rounded-2xl p-6 hover:border-red-500/40 transition-all">
-            <div className="text-4xl mb-4 text-white">
-              <Icon name="lock" className="w-10 h-10" strokeWidth={2} />
-            </div>
-            <h3 className="text-xl font-semibold mb-2">Secure</h3>
-            <p className="text-white/70">
-              Your videos are securely stored and only accessible to you and your friends.
-            </p>
-          </div>
         </div>
       </main>
 
