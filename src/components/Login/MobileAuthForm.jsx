@@ -14,10 +14,25 @@ const MobileAuthForm = ({ isSignup }) => {
   });
   const [loading, setLoading] = useState(false);
 
+  const formatPhone = (raw) => {
+    const cleaned = (raw || "").replace(/[^\d+]/g, "");
+    if (cleaned.startsWith("+964")) return cleaned;
+    if (cleaned.startsWith("964")) return `+${cleaned}`;
+    if (cleaned.startsWith("0")) return `+964${cleaned.slice(1)}`;
+    if (/^7\d{9}$/.test(cleaned)) return `+964${cleaned}`;
+    return cleaned;
+  };
+
   const handleChange = (e) => {
+    const { name, value } = e.target;
+    if (name === "phoneNumber") {
+      const digitsOnly = value.replace(/\D/g, "");
+      setFormData({ ...formData, phoneNumber: digitsOnly });
+      return;
+    }
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: value,
     });
   };
 
@@ -38,10 +53,10 @@ const MobileAuthForm = ({ isSignup }) => {
           setLoading(false);
           return;
         }
-        
-        const phoneRegex = /^[\d\s\-+()]{10,}$/;
-        if (!phoneRegex.test(formData.phoneNumber)) {
-          toast.error("Please enter a valid phone number!", {
+
+        const formattedPhone = formatPhone(formData.phoneNumber);
+        if (!/^\+964\d{10}$/.test(formattedPhone)) {
+          toast.error("Phone must be an Iraqi number starting with +964.", {
             icon: <Icon name="warning" className="w-5 h-5 text-[#fbb034]" strokeWidth={2} />,
           });
           setLoading(false);
@@ -50,7 +65,7 @@ const MobileAuthForm = ({ isSignup }) => {
 
         const result = await authService.signUp({
           fullName: formData.fullName,
-          phoneNumber: formData.phoneNumber,
+          phoneNumber: formattedPhone,
           email: formData.email,
           password: formData.password,
         });
@@ -139,16 +154,20 @@ const MobileAuthForm = ({ isSignup }) => {
               className="w-full rounded-lg border-0 bg-[#1a1520] px-3 py-3 text-white placeholder:text-[#8d889d] disabled:opacity-50"
             />
             <div className="w-full">
-              <input
-                type="tel"
-                name="phoneNumber"
-                placeholder="Phone Number"
-                value={formData.phoneNumber}
-                onChange={handleChange}
-                disabled={loading}
-                className="w-full rounded-lg border-0 bg-[#1a1520] px-3 py-3 text-white placeholder:text-[#8d889d] disabled:opacity-50"
-              />
-              <p className="text-xs text-[#8d889d] mt-1 ml-1">e.g., +1234567890 or 123-456-7890</p>
+              <div className="flex items-center gap-2">
+                <span className="rounded-lg bg-[#1a1520] px-3 py-3 text-white text-sm border border-red-900/20 select-none">
+                  +964
+                </span>
+                <input
+                  type="tel"
+                  name="phoneNumber"
+                  placeholder="780 996 1817"
+                  value={formData.phoneNumber}
+                  onChange={handleChange}
+                  disabled={loading}
+                  className="flex-1 rounded-lg border-0 bg-[#1a1520] px-3 py-3 text-white placeholder:text-[#8d889d] disabled:opacity-50"
+                />
+              </div>
             </div>
           </>
         )}
