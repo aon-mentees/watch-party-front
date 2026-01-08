@@ -568,7 +568,15 @@ const Home = () => {
 
         {/* Videos Section */}
         <div className="mb-12">
-          <h2 className="text-3xl font-bold mb-6">Available Videos</h2>
+          <div className="flex justify-between items-center mb-6 gap-4 flex-wrap">
+            <h2 className="text-3xl font-bold">Available Videos</h2>
+            <button
+              onClick={() => navigate("/upload")}
+              className="px-6 py-3 rounded-full bg-gradient-to-br from-[#c41e3a] via-[#d4145a] to-[#fbb034] text-white font-semibold hover:opacity-90 transition-opacity shadow-lg"
+            >
+              Upload Video
+            </button>
+          </div>
           {error && (
             <div className="bg-red-500/20 border border-red-500 text-red-300 p-4 rounded-lg mb-6">
               {error}
