@@ -8,12 +8,14 @@ import FilmStripPattern from "../components/Login/FilmStripPattern";
 import "../assets/styles/Login/animations.css";
 
 function Login() {
-  const [view, setView] = useState("signup");
+  const [view, setView] = useState("signin");
   const location = useLocation();
 
   useEffect(() => {
     if (location.state?.mode === "signin") {
       setView("signin");
+    } else if (location.state?.mode === "signup") {
+      setView("signup");
     }
   }, [location.state]);
 
