@@ -14,11 +14,11 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://16.171.4.170:8081',
+        target: 'http://13.61.104.21:8081',
         changeOrigin: true,
       },
       '/ws': {
-        target: 'ws://16.171.4.170:8081',
+        target: 'ws://13.61.104.21:8081',
         ws: true,
         changeOrigin: true,
       },

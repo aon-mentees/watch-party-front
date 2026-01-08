@@ -52,6 +52,17 @@ const PartyRoom = () => {
 
       const messagesData = await partyService.getPartyMessages(partyId, 0, 50);
       setMessages(messagesData.data.content.reverse() || []);
+
+      if (partyDetails.data.latestSyncEventPayload) {
+        try {
+          const syncEvent = JSON.parse(partyDetails.data.latestSyncEventPayload);
+          if (syncEvent.videoUrl) {
+            handleFirstEvent(syncEvent);
+          }
+        } catch (e) {
+          console.error('Error parsing latestSyncEventPayload:', e);
+        }
+      }
     } catch (error) {
       toast.error(`❌ ${error.message}`);
     } finally {
@@ -100,6 +111,57 @@ const PartyRoom = () => {
       }
     );
   };
+
+const handleFirstEvent = (syncEvent) => {
+  if (!videoRef.current) return;
+
+  const videoCurrentTime = syncEvent.videoCurrentTime || 0;
+  const eventDateTime = syncEvent.eventDateTime || Date.now();
+  const videoUrl = syncEvent.videoUrl;
+  
+  // Calculate time offset (how long ago the event happened)
+  const myTime = Date.now();
+  const offset = (myTime - eventDateTime) / 1000; // Convert to seconds
+
+  ignoringEvents.current = true;
+  
+  // Set video URL
+  setVideoUrl(videoUrl);
+  videoRef.current.src = videoUrl;
+  videoRef.current.load();
+
+  // Wait for video to load, then sync
+  videoRef.current.onloadeddata = () => {
+    switch (syncEvent.event) {
+      case 'PLAY':
+        // If video is playing, sync to current time + offset
+        videoRef.current.currentTime = videoCurrentTime + offset;
+        videoRef.current.play().catch(console.error);
+        toast.info("🎬 Synced to current video position");
+        break;
+      
+      case 'PAUSE':
+        // If video is paused, sync to exact time
+        videoRef.current.currentTime = videoCurrentTime;
+        videoRef.current.pause();
+        toast.info("⏸️ Video is paused");
+        break;
+      
+      case 'SEEK':
+        // Sync to seek position
+        videoRef.current.currentTime = videoCurrentTime;
+        if (syncEvent.previousEvent === 'PLAY') {
+          videoRef.current.currentTime = videoCurrentTime + offset;
+          videoRef.current.play().catch(console.error);
+        }
+        break;
+    }
+
+    setTimeout(() => {
+      ignoringEvents.current = false;
+    }, 1500);
+  };
+};
 
   const handleSyncEvent = (event) => {
     if (!videoRef.current) return;
