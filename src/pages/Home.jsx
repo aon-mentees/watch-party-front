@@ -481,50 +481,6 @@ const Home = () => {
             Host amazing watch parties with your friends. Stream together, chat
             together, enjoy together.
           </p>
-          {profile && (
-            <div className="mt-4 text-sm text-white/50">
-              <p>{profile.email}</p>
-            </div>
-          )}
-        </div>
-
-        {/* Feature Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-12">
-          {/* Card 1 */}
-          <div 
-            className="bg-[#0d0a12] border border-red-900/20 rounded-2xl p-6 hover:border-red-500/40 transition-all hover:shadow-[0_0_30px_rgba(196,30,58,0.3)] cursor-pointer"
-            onClick={() => setIsCreateModalOpen(true)}
-          >
-            <div className="text-4xl mb-4 text-white">
-              <Icon name="clapper" className="w-10 h-10" strokeWidth={2} />
-            </div>
-            <h3 className="text-xl font-semibold mb-2">Create Party</h3>
-            <p className="text-white/70">
-              Start a new watch party and invite your friends to join the fun.
-            </p>
-          </div>
-
-          {/* Card 2 */}
-          <div className="bg-[#0d0a12] border border-red-900/20 rounded-2xl p-6 hover:border-red-500/40 transition-all hover:shadow-[0_0_30px_rgba(196,30,58,0.3)]">
-            <div className="text-4xl mb-4 text-white">
-              <Icon name="chat" className="w-10 h-10" strokeWidth={2} />
-            </div>
-            <h3 className="text-xl font-semibold mb-2">Live Chat</h3>
-            <p className="text-white/70">
-              Chat with your friends in real-time while watching together.
-            </p>
-          </div>
-
-          {/* Card 3 */}
-          <div className="bg-[#0d0a12] border border-red-900/20 rounded-2xl p-6 hover:border-red-500/40 transition-all hover:shadow-[0_0_30px_rgba(196,30,58,0.3)]">
-            <div className="text-4xl mb-4 text-white">
-              <Icon name="drama" className="w-10 h-10" strokeWidth={2} />
-            </div>
-            <h3 className="text-xl font-semibold mb-2">Sync Playback</h3>
-            <p className="text-white/70">
-              Everyone stays in sync. Pause, play, and rewind together.
-            </p>
-          </div>
         </div>
 
         {/* Active Parties Section - NEW! */}
