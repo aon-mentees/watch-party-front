@@ -1,5 +1,5 @@
 import React, { useEffect, useState, useRef } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { toast } from "react-toastify";
 import authService from "../services/authService";
 import apiClient from "../config/api";
@@ -26,10 +26,6 @@ const CreatePartyModal = ({ isOpen, onClose, onCreateSuccess }) => {
     e.preventDefault();
     if (!partyName.trim()) {
       toast.error("❌ Party name is required!");
-      return;
-    }
-    if (!thumbnail) {
-      toast.error("❌ Please select a thumbnail!");
       return;
     }
 
@@ -82,7 +78,7 @@ const CreatePartyModal = ({ isOpen, onClose, onCreateSuccess }) => {
 
           <div>
             <label className="block text-sm font-medium text-white/70 mb-2">
-              Thumbnail
+              Cover Image <span className="text-white/50">(Optional)</span>
             </label>
             <div className="relative">
               <input
@@ -106,7 +102,8 @@ const CreatePartyModal = ({ isOpen, onClose, onCreateSuccess }) => {
                 ) : (
                   <div className="text-center">
                     <span className="text-4xl mb-2">🖼️</span>
-                    <p className="text-sm text-white/50">Click to upload thumbnail</p>
+                    <p className="text-sm text-white/50">Click to upload cover image</p>
+                    <p className="text-xs text-white/30 mt-1">JPG, PNG or WebP</p>
                   </div>
                 )}
               </label>
@@ -128,6 +125,7 @@ const CreatePartyModal = ({ isOpen, onClose, onCreateSuccess }) => {
 
 const Home = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const [user, setUser] = useState(null);
   const [profile, setProfile] = useState(null);
   const [videos, setVideos] = useState([]);
@@ -147,6 +145,14 @@ const Home = () => {
   const [partyPage, setPartyPage] = useState(0);
   const [partyTotalPages, setPartyTotalPages] = useState(0);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+
+  useEffect(() => {
+    if (location.state?.refreshParties && user) {
+      loadParties(0); 
+      
+      window.history.replaceState({}, document.title);
+    }
+  }, [location.state?.refreshParties, user]);
 
   const normalizeUser = (data) => ({
     id: data?.id || data?.userId || data?.sub,
@@ -248,6 +254,10 @@ const Home = () => {
       setParties(result.content || []);
       setPartyTotalPages(result.page?.totalPages || 0);
       setPartyPage(page);
+      
+      if (page === 0 && location.state?.refreshParties) {
+        toast.success("🔄 Parties list updated!");
+      }
     } catch (error) {
       toast.error(`❌ Failed to load parties: ${error.message}`);
     } finally {
@@ -566,8 +576,8 @@ const Home = () => {
                     <div className="p-4">
                       <h3 className="text-lg font-semibold mb-2 truncate">{party.name}</h3>
                       <div className="flex items-center justify-between text-sm text-white/50">
-                        <span>Owner ID: {party.ownerUserId}</span>
-                        <span className="text-xs">{new Date(party.createdAt).toLocaleDateString()}</span>
+                        <span className="truncate">Host: {party.ownerName || `User ${party.ownerUserId}`}</span>
+                        <span className="text-xs flex-shrink-0 ml-2">{new Date(party.createdAt).toLocaleDateString()}</span>
                       </div>
                     </div>
                   </div>

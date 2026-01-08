@@ -138,15 +138,18 @@ const MobileAuthForm = ({ isSignup }) => {
               disabled={loading}
               className="w-full rounded-lg border-0 bg-[#1a1520] px-3 py-3 text-white placeholder:text-[#8d889d] disabled:opacity-50"
             />
-            <input
-              type="tel"
-              name="phoneNumber"
-              placeholder="Phone Number"
-              value={formData.phoneNumber}
-              onChange={handleChange}
-              disabled={loading}
-              className="w-full rounded-lg border-0 bg-[#1a1520] px-3 py-3 text-white placeholder:text-[#8d889d] disabled:opacity-50"
-            />
+            <div className="w-full">
+              <input
+                type="tel"
+                name="phoneNumber"
+                placeholder="Phone Number"
+                value={formData.phoneNumber}
+                onChange={handleChange}
+                disabled={loading}
+                className="w-full rounded-lg border-0 bg-[#1a1520] px-3 py-3 text-white placeholder:text-[#8d889d] disabled:opacity-50"
+              />
+              <p className="text-xs text-[#8d889d] mt-1 ml-1">e.g., +1234567890 or 123-456-7890</p>
+            </div>
           </>
         )}
         <input
