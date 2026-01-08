@@ -19,6 +19,7 @@ const Profile = () => {
   const [profileForm, setProfileForm] = useState({ fullName: "", email: "", phoneNumber: "" });
   const [pictureFile, setPictureFile] = useState(null);
   const [picturePreview, setPicturePreview] = useState(null);
+  const [headerProfilePicture, setHeaderProfilePicture] = useState(null);
   const [savingProfile, setSavingProfile] = useState(false);
   const [uploadingPicture, setUploadingPicture] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
@@ -36,7 +37,7 @@ const Profile = () => {
         phoneNumber: normalizedUser?.phoneNumber || "",
       });
       if (normalizedUser?.profilePictureUrl) {
-        setPicturePreview(normalizedUser.profilePictureUrl);
+        setHeaderProfilePicture(normalizedUser.profilePictureUrl);
       }
       localStorage.setItem("currentUser", JSON.stringify(normalizedUser));
     } catch (error) {
@@ -67,7 +68,7 @@ const Profile = () => {
           phoneNumber: cachedUser?.phoneNumber || "",
         });
         if (cachedUser?.profilePictureUrl) {
-          setPicturePreview(cachedUser.profilePictureUrl);
+          setHeaderProfilePicture(cachedUser.profilePictureUrl);
         }
       } catch (err) {
         console.error("Error parsing cached user:", err);
@@ -104,9 +105,31 @@ const Profile = () => {
 
   const handlePictureSelect = (e) => {
     const file = e.target.files?.[0];
-    if (!file) return;
+    
+    if (picturePreview && picturePreview.startsWith('blob:')) {
+      URL.revokeObjectURL(picturePreview);
+    }
+    
+    if (!file) {
+      setPictureFile(null);
+      setPicturePreview(null);
+      return;
+    }
+    
     setPictureFile(file);
     setPicturePreview(URL.createObjectURL(file));
+  };
+
+  const handleRemovePicture = () => {
+    if (picturePreview && picturePreview.startsWith('blob:')) {
+      URL.revokeObjectURL(picturePreview);
+    }
+    
+    setPictureFile(null);
+    setPicturePreview(null);
+    
+    const fileInput = document.querySelector('input[type="file"]');
+    if (fileInput) fileInput.value = '';
   };
 
   const handleProfilePictureUpload = async () => {
@@ -120,12 +143,21 @@ const Profile = () => {
       const updatedUser = await userService.updateProfilePicture(pictureFile);
       const normalizedUser = normalizeUser(updatedUser);
       setUser(normalizedUser);
-      if (normalizedUser.profilePictureUrl) {
-        setPicturePreview(normalizedUser.profilePictureUrl);
+      
+      if (picturePreview && picturePreview.startsWith('blob:')) {
+        URL.revokeObjectURL(picturePreview);
       }
+      
+      if (normalizedUser.profilePictureUrl) {
+        setHeaderProfilePicture(normalizedUser.profilePictureUrl);
+      }
+      setPicturePreview(null);
       localStorage.setItem("currentUser", JSON.stringify(normalizedUser));
       toast.success("Profile picture updated");
       setPictureFile(null);
+      
+      const fileInput = document.querySelector('input[type="file"]');
+      if (fileInput) fileInput.value = '';
     } catch (err) {
       console.error("Error uploading profile picture:", err);
       toast.error(err?.message || "Failed to update profile picture");
@@ -208,8 +240,8 @@ const Profile = () => {
 
             <div className="flex items-center gap-4 rounded-full px-4 py-2 transition-all">
               <div className="w-10 h-10 rounded-full bg-linear-to-br from-[#c41e3a] via-[#d4145a] to-[#fbb034] flex items-center justify-center flex-shrink-0 overflow-hidden">
-                {picturePreview ? (
-                  <img src={picturePreview} alt="Profile" className="w-full h-full object-cover" />
+                {headerProfilePicture ? (
+                  <img src={headerProfilePicture} alt="Profile" className="w-full h-full object-cover" />
                 ) : (
                   <span className="text-white font-semibold text-sm">
                     {(user?.name || "U").charAt(0).toUpperCase()}
@@ -318,13 +350,24 @@ const Profile = () => {
                   <p className="text-xs text-white/50 mt-1">Max size: 5MB. JPG/PNG recommended.</p>
                 </div>
               </div>
-              <button
-                onClick={handleProfilePictureUpload}
-                disabled={uploadingPicture}
-                className="w-full px-4 py-2 bg-linear-to-br from-[#c41e3a] via-[#d4145a] to-[#fbb034] text-white rounded-lg font-semibold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
-              >
-                {uploadingPicture ? "Uploading..." : "Upload"}
-              </button>
+              <div className="flex gap-2">
+                {pictureFile && (
+                  <button
+                    onClick={handleRemovePicture}
+                    disabled={uploadingPicture}
+                    className="flex-1 px-4 py-2 bg-red-900/40 hover:bg-red-900/60 text-white rounded-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed transition-all border border-red-900/20"
+                  >
+                    Remove
+                  </button>
+                )}
+                <button
+                  onClick={handleProfilePictureUpload}
+                  disabled={uploadingPicture}
+                  className={`${pictureFile ? 'flex-1' : 'w-full'} px-4 py-2 bg-linear-to-br from-[#c41e3a] via-[#d4145a] to-[#fbb034] text-white rounded-lg font-semibold hover:opacity-90 disabled:opacity-50 disabled:cursor-not-allowed transition-all`}
+                >
+                  {uploadingPicture ? "Uploading..." : "Upload"}
+                </button>
+              </div>
             </div>
 
             <div className="bg-[#190b10] border border-red-900/30 rounded-2xl p-6">
