@@ -40,7 +40,7 @@ const authService = {
       return { token, user };
     } catch (error) {
       console.error("Signup error:", error);
-      throw new Error(error.response?.data?.message || error.message || 'Sign up failed');
+      throw error;
     }
   },
 
@@ -81,7 +81,7 @@ const authService = {
       return { token, user };
     } catch (error) {
       console.error("Signin error:", error);
-      throw new Error(error.response?.data?.message || error.message || 'Login failed');
+      throw error;
     }
   },
 
@@ -126,7 +126,7 @@ const authService = {
 
       return data;
     } catch (error) {
-      throw new Error(error.message || 'Token refresh failed');
+      throw error;
     }
   },
 };

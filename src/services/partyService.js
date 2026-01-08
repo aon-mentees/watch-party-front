@@ -9,7 +9,7 @@ const partyService = {
       });
       return response.data;
     } catch (error) {
-      throw new Error(error.message || 'Failed to fetch parties');
+      throw error;
     }
   },
 
@@ -27,7 +27,7 @@ const partyService = {
       });
       return response.data;
     } catch (error) {
-      throw new Error(error.message || 'Failed to create party');
+      throw error;
     }
   },
 
@@ -37,7 +37,7 @@ const partyService = {
       const response = await apiClient.patch('/api/v1/parties/join', { partyId });
       return response.data;
     } catch (error) {
-      throw new Error(error.message || 'Failed to join party');
+      throw error;
     }
   },
 
@@ -47,7 +47,7 @@ const partyService = {
       const response = await apiClient.get(`/api/v1/parties/${partyId}`);
       return response.data;
     } catch (error) {
-      throw new Error(error.message || 'Failed to get party details');
+      throw error;
     }
   },
 
@@ -59,7 +59,7 @@ const partyService = {
       });
       return response.data;
     } catch (error) {
-      throw new Error(error.message || 'Failed to get messages');
+      throw error;
     }
   },
 
@@ -69,7 +69,7 @@ const partyService = {
       const response = await apiClient.delete('/api/v1/parties/leave');
       return response.data;
     } catch (error) {
-      throw new Error(error.message || 'Failed to leave party');
+      throw error;
     }
   },
 };

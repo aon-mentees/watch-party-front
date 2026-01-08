@@ -69,7 +69,7 @@ const UploadVideo = () => {
       }, 1500);
     } catch (error) {
       console.error("Error uploading video:", error);
-      toast.error(error.response?.data?.message || "Failed to upload video");
+      toast.error(error.message || "Failed to upload video");
     } finally {
       setLoading(false);
       setUploadProgress(0);
