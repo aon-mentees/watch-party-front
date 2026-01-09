@@ -58,7 +58,7 @@ const CreatePartyModal = ({ isOpen, onClose, onCreateSuccess }) => {
         </button>
 
         <h2 className="text-2xl font-bold mb-6 bg-gradient-to-r from-[#c41e3a] via-[#d4145a] to-[#fbb034] bg-clip-text text-transparent">
-          Create Watch Party 🎬
+          Create Watch Party 
         </h2>
 
         <div className="space-y-4">
