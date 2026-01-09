@@ -13,6 +13,7 @@ const AuthForm = ({ type, active, title, isSignup }) => {
     password: "",
   });
   const [loading, setLoading] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
   
   const formatPhone = (raw) => {
     const cleaned = (raw || "").replace(/[^\d+]/g, "");
@@ -186,15 +187,29 @@ const AuthForm = ({ type, active, title, isSignup }) => {
           disabled={loading}
           className="w-full rounded-lg border-0 bg-[#1a1520] px-3 py-3.5 text-white placeholder:text-[#8d889d] disabled:opacity-50"
         />
-        <input
-          type="password"
-          name="password"
-          placeholder="Password"
-          value={formData.password}
-          onChange={handleChange}
-          disabled={loading}
-          className="w-full rounded-lg border-0 bg-[#1a1520] px-3 py-3.5 text-white placeholder:text-[#8d889d] disabled:opacity-50"
-        />
+        <div className="relative w-full">
+          <input
+            type={showPassword ? "text" : "password"}
+            name="password"
+            placeholder="Password"
+            value={formData.password}
+            onChange={handleChange}
+            disabled={loading}
+            className="w-full rounded-lg border-0 bg-[#1a1520] px-3 py-3.5 pr-12 text-white placeholder:text-[#8d889d] disabled:opacity-50"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-[#8d889d] hover:text-white transition-colors"
+            disabled={loading}
+          >
+            <Icon
+              name={showPassword ? "eye-off" : "eye"}
+              className="w-5 h-5"
+              strokeWidth={2}
+            />
+          </button>
+        </div>
         
         {!isSignup && (
           <a href="#" className="text-sm mt-2.5 text-[#8d889d] hover:text-white transition-colors">
