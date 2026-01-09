@@ -32,7 +32,6 @@ const CreatePartyModal = ({ isOpen, onClose, onCreateSuccess, onAlreadyInParty }
     setLoading(true);
     try {
       const result = await partyService.createParty(partyName, thumbnail);
-      toast.success("🎬 Party created successfully!");
       onCreateSuccess(result);
       onClose();
       setPartyName("");
@@ -346,7 +345,6 @@ const Home = () => {
   const handleJoinParty = async (partyId) => {
     try {
       await partyService.joinParty(partyId);
-      toast.success("🍿 Joined party successfully!");
       navigate(`/party/${partyId}`);
     } catch (error) {
       // Check if error is about already being in a party
@@ -370,7 +368,6 @@ const Home = () => {
       // If there's a pending party to join, join it
       if (alreadyInPartyModal.pendingPartyId) {
         await partyService.joinParty(alreadyInPartyModal.pendingPartyId);
-        toast.success("🍿 Joined party successfully!");
         navigate(`/party/${alreadyInPartyModal.pendingPartyId}`);
       } else {
         // Otherwise, user was just creating a new party, so refresh parties list
