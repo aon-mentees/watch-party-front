@@ -123,6 +123,50 @@ const CreatePartyModal = ({ isOpen, onClose, onCreateSuccess }) => {
   );
 };
 
+// Already In Party Modal Component
+const AlreadyInPartyModal = ({ isOpen, onClose, onLeaveAndJoin, isLoading }) => {
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 backdrop-blur-sm px-4">
+      <div className="relative w-full max-w-md bg-[#0d0a12] border border-red-900/30 rounded-2xl p-6 shadow-[0_0_50px_rgba(196,30,58,0.4)]">
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 text-white/70 hover:text-white text-2xl"
+          disabled={isLoading}
+        >
+          ×
+        </button>
+
+        <h2 className="text-2xl font-bold mb-4 bg-gradient-to-r from-[#c41e3a] via-[#d4145a] to-[#fbb034] bg-clip-text text-transparent">
+          Already in a Party
+        </h2>
+
+        <p className="text-white/70 mb-6">
+          You're currently in another party. You must leave your current party before joining a new one.
+        </p>
+
+        <div className="flex gap-3">
+          <button
+            onClick={onClose}
+            disabled={isLoading}
+            className="flex-1 px-4 py-3 rounded-lg bg-[#1a1520] border border-white/20 text-white hover:bg-[#2a2530] transition-all disabled:opacity-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={onLeaveAndJoin}
+            disabled={isLoading}
+            className="flex-1 px-4 py-3 rounded-lg bg-gradient-to-br from-[#c41e3a] via-[#d4145a] to-[#fbb034] text-white font-semibold hover:opacity-90 transition-opacity disabled:opacity-50"
+          >
+            {isLoading ? "Leaving..." : "Leave & Join"}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const Home = () => {
   const navigate = useNavigate();
   const location = useLocation();
@@ -145,6 +189,8 @@ const Home = () => {
   const [partyPage, setPartyPage] = useState(0);
   const [partyTotalPages, setPartyTotalPages] = useState(0);
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
+  const [alreadyInPartyModal, setAlreadyInPartyModal] = useState({ isOpen: false, pendingPartyId: null });
+  const [leavingCurrentParty, setLeavingCurrentParty] = useState(false);
 
   useEffect(() => {
     if (location.state?.refreshParties && user) {
@@ -271,7 +317,32 @@ const Home = () => {
       toast.success("🍿 Joined party successfully!");
       navigate(`/party/${partyId}`);
     } catch (error) {
+      // Check if error is about already being in a party
+      if (error.status === 409 || error.message?.toLowerCase().includes('already in a party')) {
+        setAlreadyInPartyModal({ isOpen: true, pendingPartyId: partyId });
+      } else {
+        toast.error(`❌ ${error.message}`);
+      }
+    }
+  };
+
+  const handleLeaveAndJoinNew = async () => {
+    if (!alreadyInPartyModal.pendingPartyId) return;
+    
+    setLeavingCurrentParty(true);
+    try {
+      await partyService.leaveParty();
+      toast.info("👋 Left current party");
+      
+      // Now join the new party
+      await partyService.joinParty(alreadyInPartyModal.pendingPartyId);
+      toast.success("🍿 Joined party successfully!");
+      navigate(`/party/${alreadyInPartyModal.pendingPartyId}`);
+      setAlreadyInPartyModal({ isOpen: false, pendingPartyId: null });
+    } catch (error) {
       toast.error(`❌ ${error.message}`);
+    } finally {
+      setLeavingCurrentParty(false);
     }
   };
 
@@ -726,6 +797,14 @@ const Home = () => {
             handleJoinParty(result.data.id);
           }
         }}
+      />
+
+      {/* Already In Party Modal */}
+      <AlreadyInPartyModal
+        isOpen={alreadyInPartyModal.isOpen}
+        onClose={() => setAlreadyInPartyModal({ isOpen: false, pendingPartyId: null })}
+        onLeaveAndJoin={handleLeaveAndJoinNew}
+        isLoading={leavingCurrentParty}
       />
     </div>
   );
