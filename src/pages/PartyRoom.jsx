@@ -435,17 +435,40 @@ const handleFirstEvent = (syncEvent) => {
           {/* Video Section */}
           <div className="lg:col-span-2">
             {/* Video Player */}
-            <div className="bg-[#0d0a12] border border-red-900/20 rounded-2xl overflow-hidden">
+            <div className="bg-[#0d0a12] border border-red-900/20 rounded-2xl overflow-hidden relative">
               {videoUrl ? (
-                <video
-                  ref={videoRef}
-                  src={videoUrl}
-                  controls={user?.id === party?.ownerUserId}
-                  className="w-full aspect-video bg-black"
-                  onPlay={handleVideoPlay}
-                  onPause={handleVideoPause}
-                  onSeeking={handleVideoSeeking}
-                />
+                <>
+                  <video
+                    ref={videoRef}
+                    src={videoUrl}
+                    controls={user?.id === party?.ownerUserId}
+                    className="w-full aspect-video bg-black"
+                    onPlay={handleVideoPlay}
+                    onPause={handleVideoPause}
+                    onSeeking={handleVideoSeeking}
+                  />
+                  {/* Fullscreen button for non-owners */}
+                  {user?.id !== party?.ownerUserId && (
+                    <button
+                      onClick={() => {
+                        if (videoRef.current) {
+                          if (videoRef.current.requestFullscreen) {
+                            videoRef.current.requestFullscreen();
+                          } else if (videoRef.current.webkitRequestFullscreen) {
+                            videoRef.current.webkitRequestFullscreen();
+                          } else if (videoRef.current.msRequestFullscreen) {
+                            videoRef.current.msRequestFullscreen();
+                          }
+                        }
+                      }}
+                      className="absolute bottom-4 right-4 px-4 py-2 bg-black/70 hover:bg-black/90 text-white rounded-lg flex items-center gap-2 transition-all"
+                    >
+                      <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
+                        <path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/>
+                      </svg>
+                    </button>
+                  )}
+                </>
               ) : (
                 <div className="w-full aspect-video bg-black/50 flex items-center justify-center">
                   <div className="text-center">
