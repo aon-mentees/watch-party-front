@@ -205,6 +205,25 @@ const Home = () => {
   });
   const [leavingCurrentParty, setLeavingCurrentParty] = useState(false);
 
+  const [partySearchQuery, setPartySearchQuery] = useState("");
+  const [videoSearchQuery, setVideoSearchQuery] = useState("");
+
+  const filteredParties = parties.filter((party) => {
+    const query = partySearchQuery.toLowerCase();
+    return (
+      party.name.toLowerCase().includes(query) ||
+      (party.ownerName && party.ownerName.toLowerCase().includes(query))
+    );
+  });
+
+  const filteredVideos = videos.filter((video) => {
+    const query = videoSearchQuery.toLowerCase();
+    return (
+      video.videoName.toLowerCase().includes(query) ||
+      (video.ownerFullName && video.ownerFullName.toLowerCase().includes(query))
+    );
+  });
+
   useEffect(() => {
     if (location.state?.refreshParties && user) {
       loadParties(0); 
@@ -589,6 +608,24 @@ const Home = () => {
             </button>
           </div>
 
+          {/* Search for Parties */}
+          <div className="mb-6">
+            <div className="relative">
+              <Icon
+                name="search"
+                className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/50"
+                strokeWidth={2}
+              />
+              <input
+                type="text"
+                placeholder="Search parties by name or host..."
+                value={partySearchQuery}
+                onChange={(e) => setPartySearchQuery(e.target.value)}
+                className="w-full rounded-lg border-0 bg-[#1a1520] px-4 py-3 pl-12 text-white placeholder:text-[#8d889d] focus:ring-2 focus:ring-red-500/50"
+              />
+            </div>
+          </div>
+
           {partiesLoading ? (
             <div className="text-center py-12">
               <div className="inline-block w-12 h-12 border-4 border-red-500/30 border-t-red-500 rounded-full animate-spin" />
@@ -599,10 +636,15 @@ const Home = () => {
               <span className="text-6xl mb-4">🎭</span>
               <p className="text-xl text-white/70">No active parties yet. Be the first to create one!</p>
             </div>
+          ) : filteredParties.length === 0 ? (
+            <div className="text-center py-12 bg-[#0d0a12] border border-red-900/20 rounded-2xl">
+              <span className="text-6xl mb-4">🔍</span>
+              <p className="text-xl text-white/70">No parties match your search.</p>
+            </div>
           ) : (
             <>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                {parties.map((party) => (
+                {filteredParties.map((party) => (
                   <div
                     key={party.id}
                     className="bg-[#0d0a12] border border-red-900/20 rounded-2xl overflow-hidden hover:border-red-500/40 transition-all hover:shadow-[0_0_30px_rgba(196,30,58,0.3)] group cursor-pointer"
@@ -668,6 +710,25 @@ const Home = () => {
               Upload Video
             </button>
           </div>
+
+          {/* Search for Videos */}
+          <div className="mb-6">
+            <div className="relative">
+              <Icon
+                name="search"
+                className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-white/50"
+                strokeWidth={2}
+              />
+              <input
+                type="text"
+                placeholder="Search videos by name or uploader..."
+                value={videoSearchQuery}
+                onChange={(e) => setVideoSearchQuery(e.target.value)}
+                className="w-full rounded-lg border-0 bg-[#1a1520] px-4 py-3 pl-12 text-white placeholder:text-[#8d889d] focus:ring-2 focus:ring-red-500/50"
+              />
+            </div>
+          </div>
+
           {error && (
             <div className="bg-red-500/20 border border-red-500 text-red-300 p-4 rounded-lg mb-6">
               {error}
@@ -684,11 +745,18 @@ const Home = () => {
             </div>
           ) : videos && videos.length > 0 ? (
             <>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
-                {videos.map((video) => (
-                  <div
-                    key={video.videoUrl}
-                    onClick={() => handleWatchVideo(video)}
+              {filteredVideos.length === 0 ? (
+                <div className="text-center py-12 bg-[#0d0a12] border border-red-900/20 rounded-2xl">
+                  <span className="text-6xl mb-4">🔍</span>
+                  <p className="text-xl text-white/70">No videos match your search.</p>
+                </div>
+              ) : (
+                <>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-8">
+                    {filteredVideos.map((video) => (
+                      <div
+                        key={video.videoUrl}
+                        onClick={() => handleWatchVideo(video)}
                     className="bg-[#0d0a12] border border-red-900/20 rounded-2xl overflow-hidden hover:border-red-500/40 transition-all hover:shadow-[0_0_30px_rgba(196,30,58,0.3)] cursor-pointer group"
                   >
                     <div className="relative overflow-hidden bg-[#1a1520] aspect-video flex items-center justify-center group">
@@ -744,29 +812,31 @@ const Home = () => {
                     </div>
                   </div>
                 ))}
-              </div>
+                  </div>
 
-              {/* Pagination Controls */}
-              <div className="flex justify-between items-center mt-8">
-                <button
-                  onClick={handlePrevPage}
-                  disabled={pagination.number === 0}
-                  className="px-6 py-2 bg-red-900/40 hover:bg-red-900/60 disabled:opacity-50 disabled:cursor-not-allowed border border-red-900/20 rounded-lg transition-all text-white"
-                >
-                  ← Previous
-                </button>
-                <div className="text-white/70 text-sm">
-                  Page {pagination.number + 1} of {pagination.totalPages} (
-                  {pagination.totalElements} total videos)
-                </div>
-                <button
-                  onClick={handleNextPage}
-                  disabled={pagination.number >= pagination.totalPages - 1}
-                  className="px-6 py-2 bg-red-900/40 hover:bg-red-900/60 disabled:opacity-50 disabled:cursor-not-allowed border border-red-900/20 rounded-lg transition-all text-white"
-                >
-                  Next →
-                </button>
-              </div>
+                  {/* Pagination Controls */}
+                  <div className="flex justify-between items-center mt-8">
+                    <button
+                      onClick={handlePrevPage}
+                      disabled={pagination.number === 0}
+                      className="px-6 py-2 bg-red-900/40 hover:bg-red-900/60 disabled:opacity-50 disabled:cursor-not-allowed border border-red-900/20 rounded-lg transition-all text-white"
+                    >
+                      ← Previous
+                    </button>
+                    <div className="text-white/70 text-sm">
+                      Page {pagination.number + 1} of {pagination.totalPages} (
+                      {pagination.totalElements} total videos)
+                    </div>
+                    <button
+                      onClick={handleNextPage}
+                      disabled={pagination.number >= pagination.totalPages - 1}
+                      className="px-6 py-2 bg-red-900/40 hover:bg-red-900/60 disabled:opacity-50 disabled:cursor-not-allowed border border-red-900/20 rounded-lg transition-all text-white"
+                    >
+                      Next →
+                    </button>
+                  </div>
+                </>
+              )}
             </>
           ) : (
             <div className="text-center py-12">
