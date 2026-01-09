@@ -34,6 +34,7 @@ const PartyRoom = () => {
   const lastSyncTime = useRef(0);
   const userInitiated = useRef(false);
   const lastPermissionWarningTime = useRef(0);
+  const userNamesMap = useRef({});
 
   useEffect(() => {
     if (!userScrolledUp && messagesEndRef.current) {
@@ -101,6 +102,15 @@ const PartyRoom = () => {
       
       setParty(partyDetails.data);
       
+      // Update user names map
+      if (partyDetails.data.members) {
+        const namesMap = {};
+        partyDetails.data.members.forEach(member => {
+          namesMap[member.userId] = member.name;
+        });
+        userNamesMap.current = namesMap;
+      }
+      
       // Load available videos for owner selection
       const effectiveUser = currentUserParam || user;
       if (effectiveUser?.id === partyDetails.data.ownerUserId) {
@@ -125,7 +135,7 @@ const PartyRoom = () => {
         }
       }
     } catch (error) {
-      toast.error(`❌ ${error.message}`);
+      // toast.error(`❌ ${error.message}`);
     } finally {
       setLoading(false);
     }
@@ -151,24 +161,26 @@ const PartyRoom = () => {
         });
 
         // Subscribe to member events
-        websocketService.subscribeToMemberEvents((event) => {
+        websocketService.subscribeToMemberEvents(async (event) => {
           if (event.event === 'JOINED') {
-            toast.info(`👋 User ${event.userId} joined the party!`);
-            loadPartyData(); // Refresh party details
+            await loadPartyData(); 
+            const userName = event.userName || event.name || userNamesMap.current[event.userId] || `User ${event.userId}`;
+            // toast.info(`👋 ${userName} joined the party!`);
           } else if (event.event === 'LEFT') {
-            toast.info(`👋 User ${event.userId} left the party`);
-            loadPartyData();
+            const userName = event.userName || event.name || userNamesMap.current[event.userId] || `User ${event.userId}`;
+            // toast.info(`👋 ${userName} left the party`);
+            await loadPartyData();
           }
         });
 
         // Subscribe to errors
         websocketService.subscribeToErrors((error) => {
-          toast.error(`❌ ${error}`);
+          // toast.error(`❌ ${error}`);
         });
       },
       (error) => {
         setWsConnected(false);
-        toast.error("❌ WebSocket connection failed!");
+        // toast.error("❌ WebSocket connection failed!");
       }
     );
   };
@@ -198,14 +210,14 @@ const handleFirstEvent = (syncEvent) => {
         // If video is playing, sync to current time + offset
         videoRef.current.currentTime = videoCurrentTime + offset;
         videoRef.current.play().catch(console.error);
-        toast.info("🎬 Synced to current video position");
+        // toast.info("🎬 Synced to current video position");
         break;
       
       case 'PAUSE':
         // If video is paused, sync to exact time
         videoRef.current.currentTime = videoCurrentTime;
         videoRef.current.pause();
-        toast.info("⏸️ Video is paused");
+        // toast.info("⏸️ Video is paused");
         break;
       
       case 'SEEK':
@@ -383,7 +395,7 @@ const handleFirstEvent = (syncEvent) => {
     try {
       await partyService.leaveParty();
       websocketService.disconnect();
-      toast.info("👋 Left the party");
+      // toast.info("👋 Left the party");
       navigate("/home", { replace: true });
     } catch (error) {
       toast.error(`❌ ${error.message}`);

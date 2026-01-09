@@ -25,7 +25,7 @@ const CreatePartyModal = ({ isOpen, onClose, onCreateSuccess, onAlreadyInParty }
   const handleSubmit = async (e) => {
     e.preventDefault();
     if (!partyName.trim()) {
-      toast.error("❌ Party name is required!");
+      // toast.error("❌ Party name is required!");
       return;
     }
 
@@ -46,7 +46,7 @@ const CreatePartyModal = ({ isOpen, onClose, onCreateSuccess, onAlreadyInParty }
         onClose();
         onAlreadyInParty();
       } else {
-        toast.error(`❌ ${error.message}`);
+        // toast.error(`❌ ${error.message}`);
       }
     } finally {
       setLoading(false);
@@ -336,7 +336,7 @@ const Home = () => {
         toast.success("🔄 Parties list updated!");
       }
     } catch (error) {
-      toast.error(`❌ Failed to load parties: ${error.message}`);
+      // toast.error(`❌ Failed to load parties: ${error.message}`);
     } finally {
       setPartiesLoading(false);
     }
@@ -354,7 +354,7 @@ const Home = () => {
       ) {
         setAlreadyInPartyModal({ isOpen: true, pendingPartyId: partyId });
       } else {
-        toast.error(`❌ ${error.message}`);
+        // toast.error(`❌ ${error.message}`);
       }
     }
   };
@@ -363,7 +363,7 @@ const Home = () => {
     setLeavingCurrentParty(true);
     try {
       await partyService.leaveParty();
-      toast.info("👋 Left current party");
+      // toast.info("👋 Left current party");
 
       // If there's a pending party to join, join it
       if (alreadyInPartyModal.pendingPartyId) {
@@ -376,7 +376,7 @@ const Home = () => {
       }
       setAlreadyInPartyModal({ isOpen: false, pendingPartyId: null });
     } catch (error) {
-      toast.error(`❌ ${error.message}`);
+      // toast.error(`❌ ${error.message}`);
     } finally {
       setLeavingCurrentParty(false);
     }
