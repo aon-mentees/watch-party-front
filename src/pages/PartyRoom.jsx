@@ -292,7 +292,7 @@ const handleFirstEvent = (syncEvent) => {
       await partyService.leaveParty();
       websocketService.disconnect();
       toast.info("👋 Left the party");
-      navigate("/home");
+      navigate("/home", { replace: true });
     } catch (error) {
       toast.error(`❌ ${error.message}`);
     }
