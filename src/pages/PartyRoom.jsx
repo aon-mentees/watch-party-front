@@ -22,6 +22,7 @@ const PartyRoom = () => {
   const [loading, setLoading] = useState(true);
   const [wsConnected, setWsConnected] = useState(false);
   const [userScrolledUp, setUserScrolledUp] = useState(false);
+  const [isLeavingParty, setIsLeavingParty] = useState(false);
   
   // Track if we should ignore video events (to prevent loops)
   const ignoringEvents = useRef(false);
@@ -271,7 +272,7 @@ const handleFirstEvent = (syncEvent) => {
   };
 
   const handleVideoPause = () => {
-    if (!wsConnected || ignoringEvents.current || Date.now() - lastSyncTime.current < 1500) return;
+    if (!wsConnected || ignoringEvents.current || Date.now() - lastSyncTime.current < 1500 || isLeavingParty) return;
     
     if (user?.id !== party?.ownerUserId) {
       videoRef.current?.play();
@@ -329,6 +330,7 @@ const handleFirstEvent = (syncEvent) => {
   };
 
   const handleLeaveParty = async () => {
+    setIsLeavingParty(true);
     try {
       await partyService.leaveParty();
       websocketService.disconnect();
