@@ -97,14 +97,15 @@ const Profile = () => {
     e.preventDefault();
     setSavingProfile(true);
     try {
-      const updatedUser = await userService.updateProfile({
+      await userService.updateProfile({
         fullName: profileForm.fullName.trim(),
         email: profileForm.email.trim(),
         phoneNumber: profileForm.phoneNumber.trim(),
       });
-      const normalizedUser = normalizeUser(updatedUser);
-      setUser(normalizedUser);
-      localStorage.setItem("currentUser", JSON.stringify(normalizedUser));
+      
+      // Refetch complete user data to ensure all fields are updated
+      await fetchCurrentUser();
+      
       toast.success("Profile updated successfully");
     } catch (err) {
       console.error("Error updating profile:", err);
@@ -151,24 +152,20 @@ const Profile = () => {
 
     setUploadingPicture(true);
     try {
-      const updatedUser = await userService.updateProfilePicture(pictureFile);
-      const normalizedUser = normalizeUser(updatedUser);
-      setUser(normalizedUser);
+      await userService.updateProfilePicture(pictureFile);
       
       if (picturePreview && picturePreview.startsWith('blob:')) {
         URL.revokeObjectURL(picturePreview);
       }
-      
-      if (normalizedUser.profilePictureUrl) {
-        setHeaderProfilePicture(normalizedUser.profilePictureUrl);
-      }
       setPicturePreview(null);
-      localStorage.setItem("currentUser", JSON.stringify(normalizedUser));
-      toast.success("Profile picture updated");
       setPictureFile(null);
       
       const fileInput = document.querySelector('input[type="file"]');
       if (fileInput) fileInput.value = '';
+      
+      await fetchCurrentUser();
+      
+      toast.success("Profile picture updated");
     } catch (err) {
       console.error("Error uploading profile picture:", err);
       toast.error(err?.message || "Failed to update profile picture");
