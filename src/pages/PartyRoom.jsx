@@ -23,6 +23,7 @@ const PartyRoom = () => {
   const ignoringEvents = useRef(false);
   const lastSyncTime = useRef(0);
   const userInitiated = useRef(false);
+  const lastPermissionWarningTime = useRef(0);
 
   useEffect(() => {
     if (!authService.isAuthenticated()) {
@@ -180,7 +181,6 @@ const handleFirstEvent = (syncEvent) => {
           if (videoRef.current.paused) {
             videoRef.current.play().catch(console.error);
           }
-          toast.info(`▶️ ${event.userName} played the video`);
           break;
         
         case 'PAUSE':
@@ -191,18 +191,15 @@ const handleFirstEvent = (syncEvent) => {
           if (!videoRef.current.paused) {
             videoRef.current.pause();
           }
-          toast.info(`⏸️ ${event.userName} paused the video`);
           break;
         
         case 'SEEK':
           videoRef.current.currentTime = event.videoCurrentTime || 0;
-          toast.info(`⏩ ${event.userName} seeked the video`);
           break;
         
         case 'CHANGE_VIDEO':
         case 'CHANGE_URL':
           setVideoUrl(event.videoUrl);
-          toast.info(`🎬 ${event.userName} changed the video`);
           break;
       }
     } catch (error) {
@@ -218,6 +215,11 @@ const handleFirstEvent = (syncEvent) => {
   const handleVideoPlay = () => {
     if (!wsConnected || ignoringEvents.current || Date.now() - lastSyncTime.current < 1500) return;
     
+    if (user?.id !== party?.ownerUserId) {
+      videoRef.current?.pause();
+      return;
+    }
+    
     userInitiated.current = true;
     websocketService.sendSyncEvent(
       partyId,
@@ -230,6 +232,11 @@ const handleFirstEvent = (syncEvent) => {
   const handleVideoPause = () => {
     if (!wsConnected || ignoringEvents.current || Date.now() - lastSyncTime.current < 1500) return;
     
+    if (user?.id !== party?.ownerUserId) {
+      videoRef.current?.play();
+      return;
+    }
+    
     userInitiated.current = true;
     websocketService.sendSyncEvent(
       partyId,
@@ -241,6 +248,10 @@ const handleFirstEvent = (syncEvent) => {
 
   const handleVideoSeeking = () => {
     if (!wsConnected || ignoringEvents.current || Date.now() - lastSyncTime.current < 1500) return;
+    
+    if (user?.id !== party?.ownerUserId) {
+      return;
+    }
     
     websocketService.sendSyncEvent(
       partyId,
@@ -307,6 +318,11 @@ const handleFirstEvent = (syncEvent) => {
             <div>
               <h1 className="text-xl font-bold">{party.partyName} 🎬</h1>
               <p className="text-sm text-white/50">Host: {party.ownerName}</p>
+              {user?.id === party?.ownerUserId ? (
+                <p className="text-xs text-yellow-400 mt-1">👑 You are the host - you control video playback</p>
+              ) : (
+                <p className="text-xs text-white/50 mt-1">🔒 Only the host can control video playback</p>
+              )}
             </div>
             <div className="flex items-center gap-3">
               <div className={`w-3 h-3 rounded-full ${wsConnected ? 'bg-green-500' : 'bg-red-500'}`} />
@@ -332,7 +348,7 @@ const handleFirstEvent = (syncEvent) => {
                 <video
                   ref={videoRef}
                   src={videoUrl}
-                  controls
+                  controls={user?.id === party?.ownerUserId}
                   className="w-full aspect-video bg-black"
                   onPlay={handleVideoPlay}
                   onPause={handleVideoPause}
