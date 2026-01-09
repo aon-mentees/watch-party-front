@@ -4,6 +4,7 @@ import { toast } from "react-toastify";
 import authService from "../services/authService";
 import partyService from "../services/partyService";
 import userService from "../services/userService";
+import apiClient from "../config/api";
 import websocketService from "../services/websocketService";
 
 const PartyRoom = () => {
@@ -22,7 +23,11 @@ const PartyRoom = () => {
   const [loading, setLoading] = useState(true);
   const [wsConnected, setWsConnected] = useState(false);
   const [userScrolledUp, setUserScrolledUp] = useState(false);
+  const [ownerVideos, setOwnerVideos] = useState([]);
+  const [ownerVideosLoading, setOwnerVideosLoading] = useState(false);
+  const [selectedVideoUrl, setSelectedVideoUrl] = useState("");
   const [isLeavingParty, setIsLeavingParty] = useState(false);
+  const [activeTab, setActiveTab] = useState("members");
   
   // Track if we should ignore video events (to prevent loops)
   const ignoringEvents = useRef(false);
@@ -53,7 +58,7 @@ const PartyRoom = () => {
     const currentUser = authService.getCurrentUser();
     setUser(currentUser);
     
-    loadPartyData();
+    loadPartyData(currentUser);
     connectWebSocket();
 
     return () => {
@@ -61,7 +66,14 @@ const PartyRoom = () => {
     };
   }, [partyId, navigate]);
 
-  const loadPartyData = async () => {
+  // Ensure owner videos are fetched if user info arrives slightly later
+  useEffect(() => {
+    if (user && party && user.id === party.ownerUserId) {
+      fetchOwnerVideos();
+    }
+  }, [user, party]);
+
+  const loadPartyData = async (currentUserParam) => {
     try {
       const partyDetails = await partyService.getPartyDetails(partyId);
       
@@ -88,6 +100,12 @@ const PartyRoom = () => {
       }
       
       setParty(partyDetails.data);
+      
+      // Load available videos for owner selection
+      const effectiveUser = currentUserParam || user;
+      if (effectiveUser?.id === partyDetails.data.ownerUserId) {
+        fetchOwnerVideos();
+      }
       
       if (partyDetails.data.currentVideoUrl) {
         setVideoUrl(partyDetails.data.currentVideoUrl);
@@ -303,6 +321,39 @@ const handleFirstEvent = (syncEvent) => {
     );
   };
 
+  const fetchOwnerVideos = async () => {
+    setOwnerVideosLoading(true);
+    try {
+      const response = await apiClient.get("/api/v1/videos", {
+        params: { page: 0, size: 20, sortBy: "timestamp" },
+      });
+      setOwnerVideos(response.data?.content || []);
+    } catch (err) {
+      console.error("Error fetching owner videos:", err);
+    } finally {
+      setOwnerVideosLoading(false);
+    }
+  };
+
+  const sendVideoChange = (url) => {
+    setVideoUrl(url);
+    websocketService.sendSyncEvent(partyId, 'CHANGE_URL', url, 0);
+    toast.success("🎬 Video changed!");
+  };
+
+  const handleLoadSelectedVideo = (e) => {
+    e.preventDefault();
+    if (!selectedVideoUrl) {
+      toast.error("❌ Please select a video!");
+      return;
+    }
+    if (!wsConnected) {
+      toast.error("❌ WebSocket not connected");
+      return;
+    }
+    sendVideoChange(selectedVideoUrl);
+  };
+
   const handleChangeVideo = (e) => {
     e.preventDefault();
     if (!newVideoUrl.trim()) {
@@ -315,10 +366,8 @@ const handleFirstEvent = (syncEvent) => {
       return;
     }
 
-    setVideoUrl(newVideoUrl);
-    websocketService.sendSyncEvent(partyId, 'CHANGE_URL', newVideoUrl, 0);
+    sendVideoChange(newVideoUrl);
     setNewVideoUrl("");
-    toast.success("🎬 Video changed!");
   };
 
   const handleSendMessage = (e) => {
@@ -384,7 +433,7 @@ const handleFirstEvent = (syncEvent) => {
       <div className="max-w-7xl mx-auto px-4 py-6">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Video Section */}
-          <div className="lg:col-span-2 space-y-4">
+          <div className="lg:col-span-2">
             {/* Video Player */}
             <div className="bg-[#0d0a12] border border-red-900/20 rounded-2xl overflow-hidden">
               {videoUrl ? (
@@ -407,114 +456,200 @@ const handleFirstEvent = (syncEvent) => {
                 </div>
               )}
             </div>
-
-            {/* Change Video URL - Only visible to owner */}
-            {user?.id === party?.ownerUserId && (
-              <div className="bg-[#0d0a12] border border-red-900/20 rounded-2xl p-4">
-                <h3 className="text-lg font-semibold mb-3">Change Video 🎥</h3>
-                <div className="flex gap-2">
-                  <input
-                    type="text"
-                    value={newVideoUrl}
-                    onChange={(e) => setNewVideoUrl(e.target.value)}
-                    placeholder="Paste video URL here..."
-                    className="flex-1 rounded-lg border-0 bg-[#1a1520] px-4 py-2 text-white placeholder:text-[#8d889d]"
-                  />
-                  <button
-                    onClick={handleChangeVideo}
-                    className="px-6 py-2 rounded-lg bg-gradient-to-br from-[#c41e3a] via-[#d4145a] to-[#fbb034] hover:opacity-90 transition-opacity"
-                  >
-                    Load Video
-                  </button>
-                </div>
-                <p className="text-xs text-white/40 mt-2">
-                  Supported: Direct video links (.mp4, .webm) or streaming URLs
-                </p>
-              </div>
-            )}
           </div>
 
           {/* Sidebar */}
-          <div className="space-y-4">
-            {/* Members List */}
-            <div className="bg-[#0d0a12] border border-red-900/20 rounded-2xl p-4">
-              <h3 className="text-lg font-semibold mb-3">Members ({party.members?.length || 0}) 👥</h3>
-              <div className="space-y-2 max-h-48 overflow-y-auto">
-                {party.members?.map((member) => (
-                  <div key={member.userId} className="flex items-center gap-2 p-2 bg-[#1a1520] rounded-lg">
-                    {member.profilePictureUrl ? (
-                      <img
-                        src={member.profilePictureUrl}
-                        alt={member.name}
-                        className="w-8 h-8 rounded-full object-cover"
-                        onError={(e) => {
-                          e.target.style.display = 'none';
-                        }}
-                      />
-                    ) : null}
-                    {!member.profilePictureUrl && (
-                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#c41e3a] to-[#fbb034] flex items-center justify-center text-sm font-bold">
-                        {member.name.charAt(0)}
-                      </div>
-                    )}
-                    <div className="flex-1">
-                      <p className="text-sm font-medium">{member.name}</p>
-                      {member.userId === party.ownerUserId && (
-                        <span className="text-xs text-yellow-400">👑 Host</span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Chat */}
-            <div className="bg-[#0d0a12] border border-red-900/20 rounded-2xl p-4 flex flex-col h-[500px]">
-              <h3 className="text-lg font-semibold mb-3">Chat 💬</h3>
-              
-              {/* Messages */}
-              <div 
-                ref={messagesContainerRef}
-                onScroll={handleMessagesScroll}
-                className="flex-1 overflow-y-auto space-y-2 mb-3"
-              >
-                {messages.length === 0 ? (
-                  <p className="text-center text-white/50 text-sm">No messages yet. Say hi! 👋</p>
-                ) : (
-                  messages.map((msg) => (
-                    <div key={msg.id} className="p-2 bg-[#1a1520] rounded-lg">
-                      <p className="text-xs text-white/50 mb-1">
-                        {msg.senderName} • {new Date(msg.createdAt).toLocaleTimeString()}
-                      </p>
-                      <p className="text-sm">{msg.content}</p>
-                    </div>
-                  ))
-                )}
-                <div ref={messagesEndRef} />
-              </div>
-
-              {/* Send Message */}
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={newMessage}
-                  onChange={(e) => setNewMessage(e.target.value)}
-                  onKeyPress={(e) => e.key === 'Enter' && handleSendMessage(e)}
-                  placeholder="Type a message..."
-                  className="flex-1 rounded-lg border-0 bg-[#1a1520] px-3 py-2 text-sm text-white placeholder:text-[#8d889d]"
-                  disabled={!wsConnected}
-                />
+          <div>
+            <div className="bg-[#0d0a12] border border-red-900/20 rounded-2xl p-4 flex flex-col h-115">
+              {/* Tab Buttons */}
+              <div className="flex gap-2 mb-4">
                 <button
-                  onClick={handleSendMessage}
-                  disabled={!wsConnected}
-                  className="px-4 py-2 rounded-lg bg-gradient-to-br from-[#c41e3a] via-[#d4145a] to-[#fbb034] hover:opacity-90 transition-opacity disabled:opacity-50"
+                  onClick={() => setActiveTab("members")}
+                  className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-all ${
+                    activeTab === "members"
+                      ? "bg-gradient-to-br from-[#c41e3a] via-[#d4145a] to-[#fbb034] text-white"
+                      : "bg-[#1a1520] text-white/70 hover:text-white"
+                  }`}
                 >
-                  Send
+                  👥 Members ({party.members?.length || 0})
+                </button>
+                <button
+                  onClick={() => setActiveTab("chat")}
+                  className={`flex-1 px-4 py-2 rounded-lg font-semibold transition-all ${
+                    activeTab === "chat"
+                      ? "bg-gradient-to-br from-[#c41e3a] via-[#d4145a] to-[#fbb034] text-white"
+                      : "bg-[#1a1520] text-white/70 hover:text-white"
+                  }`}
+                >
+                  💬 Chat
                 </button>
               </div>
+
+              {/* Members Tab */}
+              {activeTab === "members" && (
+                <div className="space-y-2 overflow-y-auto flex-1 pr-2">
+                  {party.members?.map((member) => (
+                    <div key={member.userId} className="flex items-center gap-2 p-2 bg-[#1a1520] rounded-lg">
+                      {member.profilePictureUrl ? (
+                        <img
+                          src={member.profilePictureUrl}
+                          alt={member.name}
+                          className="w-8 h-8 rounded-full object-cover"
+                          onError={(e) => {
+                            e.target.style.display = 'none';
+                          }}
+                        />
+                      ) : null}
+                      {!member.profilePictureUrl && (
+                        <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#c41e3a] to-[#fbb034] flex items-center justify-center text-sm font-bold">
+                          {member.name.charAt(0)}
+                        </div>
+                      )}
+                      <div className="flex-1">
+                        <p className="text-sm font-medium">{member.name}</p>
+                        {member.userId === party.ownerUserId && (
+                          <span className="text-xs text-yellow-400">👑 Host</span>
+                        )}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+
+              {/* Chat Tab */}
+              {activeTab === "chat" && (
+                <div className="flex flex-col flex-1 min-h-0">
+                  {/* Messages */}
+                  <div 
+                    ref={messagesContainerRef}
+                    onScroll={handleMessagesScroll}
+                    className="flex-1 overflow-y-auto space-y-2 mb-3 pr-2"
+                  >
+                    {messages.length === 0 ? (
+                      <p className="text-center text-white/50 text-sm">No messages yet. Say hi! 👋</p>
+                    ) : (
+                      messages.map((msg) => (
+                        <div key={msg.id} className="p-2 bg-[#1a1520] rounded-lg">
+                          <p className="text-xs text-white/50 mb-1">
+                            {msg.senderName} • {new Date(msg.createdAt).toLocaleTimeString()}
+                          </p>
+                          <p className="text-sm">{msg.content}</p>
+                        </div>
+                      ))
+                    )}
+                    <div ref={messagesEndRef} />
+                  </div>
+
+                  {/* Send Message */}
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      value={newMessage}
+                      onChange={(e) => setNewMessage(e.target.value)}
+                      onKeyPress={(e) => e.key === 'Enter' && handleSendMessage(e)}
+                      placeholder="Type a message..."
+                      className="flex-1 rounded-lg border-0 bg-[#1a1520] px-3 py-2 text-sm text-white placeholder:text-[#8d889d]"
+                      disabled={!wsConnected}
+                    />
+                    <button
+                      onClick={handleSendMessage}
+                      disabled={!wsConnected}
+                      className="px-4 py-2 rounded-lg bg-gradient-to-br from-[#c41e3a] via-[#d4145a] to-[#fbb034] hover:opacity-90 transition-opacity disabled:opacity-50"
+                    >
+                      Send
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </div>
+
+        {/* Change Video URL - Only visible to owner - Full Width */}
+        {user?.id === party?.ownerUserId && (
+          <div className="mt-6 bg-[#0d0a12] border border-red-900/20 rounded-2xl p-4 space-y-4">
+            
+            <h3 className="text-lg font-semibold mb-3">Change Video 🎥</h3>
+
+              {/* Manual URL Input */}
+            <div className="pt-2 border-t border-red-900/20">
+              <label className="text-sm text-white/70 block mb-2">Paste a video URL</label>
+              <div className="flex gap-2">
+                <input
+                  type="text"
+                  value={newVideoUrl}
+                  onChange={(e) => setNewVideoUrl(e.target.value)}
+                  placeholder="Paste video URL here..."
+                  className="flex-1 rounded-lg border-0 bg-[#1a1520] px-4 py-2 text-white placeholder:text-[#8d889d]"
+                />
+                <button
+                  onClick={handleChangeVideo}
+                  className="px-6 py-2 rounded-lg bg-gradient-to-br from-[#c41e3a] via-[#d4145a] to-[#fbb034] hover:opacity-90 transition-opacity"
+                >
+                  Load Video
+                </button>
+              </div>
+              <p className="text-xs text-white/40 mt-1">
+                Supported: Direct video links (.mp4, .webm) or streaming URLs
+              </p>
+            </div>
+            {/* Your Videos Grid */}
+            <div className="space-y-2">
+              <label className="text-sm text-white/70 block">Or Choose from your uploads</label>
+              {ownerVideosLoading ? (
+                <div className="flex justify-center py-8">
+                  <div className="text-center">
+                    <div className="inline-block w-8 h-8 border-4 border-red-500/30 border-t-red-500 rounded-full animate-spin" />
+                    <p className="text-white/50 mt-2 text-sm">Loading videos...</p>
+                  </div>
+                </div>
+              ) : ownerVideos.length === 0 ? (
+                <div className="text-center py-8 bg-[#1a1520] rounded-lg border border-red-900/10">
+                  <p className="text-white/50 text-sm">No videos uploaded yet</p>
+                </div>
+              ) : (
+                <div className="grid grid-cols-6 gap-3 max-h-64 overflow-y-auto">
+                  {ownerVideos.map((video) => (
+                    <div
+                      key={video.videoUrl}
+                      onClick={() => setSelectedVideoUrl(video.videoUrl)}
+                      className={`cursor-pointer rounded-lg overflow-hidden border-2 transition-all ${
+                        selectedVideoUrl === video.videoUrl
+                          ? 'border-red-500 shadow-[0_0_15px_rgba(196,30,58,0.5)]'
+                          : 'border-red-900/20 hover:border-red-500/40'
+                      }`}
+                    >
+                      <div className="relative bg-black/50 aspect-video flex items-center justify-center">
+                        <video
+                          src={video.videoUrl}
+                          className="w-full h-full object-cover"
+                          onLoadedMetadata={(e) => (e.target.currentTime = 1)}
+                        />
+                        <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                          <svg className="w-6 h-6 opacity-70 text-white" fill="currentColor" viewBox="0 0 24 24">
+                            <polygon points="5 3 19 12 5 21" />
+                          </svg>
+                        </div>
+                      </div>
+                      <div className="bg-[#1a1520] p-2">
+                        <p className="text-xs font-semibold truncate text-white">{video.videoName}</p>
+                        <p className="text-xs text-white/50 truncate">{video.ownerFullName}</p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+              {selectedVideoUrl && (
+                <button
+                  onClick={handleLoadSelectedVideo}
+                  className="w-full mt-2 px-4 py-2 rounded-lg bg-gradient-to-br from-[#c41e3a] via-[#d4145a] to-[#fbb034] hover:opacity-90 transition-opacity text-white font-semibold"
+                >
+                  Load Selected Video
+                </button>
+              )}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );
