@@ -3,12 +3,15 @@ import { useParams, useNavigate } from "react-router-dom";
 import { toast } from "react-toastify";
 import authService from "../services/authService";
 import partyService from "../services/partyService";
+import userService from "../services/userService";
 import websocketService from "../services/websocketService";
 
 const PartyRoom = () => {
   const { partyId } = useParams();
   const navigate = useNavigate();
   const videoRef = useRef(null);
+  const messagesEndRef = useRef(null);
+  const messagesContainerRef = useRef(null);
   
   const [user, setUser] = useState(null);
   const [party, setParty] = useState(null);
@@ -18,12 +21,27 @@ const PartyRoom = () => {
   const [newVideoUrl, setNewVideoUrl] = useState("");
   const [loading, setLoading] = useState(true);
   const [wsConnected, setWsConnected] = useState(false);
+  const [userScrolledUp, setUserScrolledUp] = useState(false);
   
   // Track if we should ignore video events (to prevent loops)
   const ignoringEvents = useRef(false);
   const lastSyncTime = useRef(0);
   const userInitiated = useRef(false);
   const lastPermissionWarningTime = useRef(0);
+
+  useEffect(() => {
+    if (!userScrolledUp && messagesEndRef.current) {
+      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    }
+  }, [messages, userScrolledUp]);
+
+  const handleMessagesScroll = () => {
+    if (!messagesContainerRef.current) return;
+    
+    const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+    const isAtBottom = scrollHeight - scrollTop - clientHeight < 50;
+    setUserScrolledUp(!isAtBottom);
+  };
 
   useEffect(() => {
     if (!authService.isAuthenticated()) {
@@ -45,6 +63,29 @@ const PartyRoom = () => {
   const loadPartyData = async () => {
     try {
       const partyDetails = await partyService.getPartyDetails(partyId);
+      
+      if (partyDetails.data.members && partyDetails.data.members.length > 0) {
+        try {
+          const membersWithProfilePics = await Promise.all(
+            partyDetails.data.members.map(async (member) => {
+              try {
+                const userDetails = await userService.getProfile(member.userId);
+                return {
+                  ...member,
+                  profilePictureUrl: userDetails?.profilePictureUrl || userDetails?.profilePicture || member.profilePictureUrl
+                };
+              } catch (err) {
+                console.error(`Failed to fetch profile for ${member.userId}:`, err);
+                return member;
+              }
+            })
+          );
+          partyDetails.data.members = membersWithProfilePics;
+        } catch (err) {
+          console.error('Error fetching member profiles:', err);
+        }
+      }
+      
       setParty(partyDetails.data);
       
       if (partyDetails.data.currentVideoUrl) {
@@ -397,9 +438,21 @@ const handleFirstEvent = (syncEvent) => {
               <div className="space-y-2 max-h-48 overflow-y-auto">
                 {party.members?.map((member) => (
                   <div key={member.userId} className="flex items-center gap-2 p-2 bg-[#1a1520] rounded-lg">
-                    <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#c41e3a] to-[#fbb034] flex items-center justify-center text-sm font-bold">
-                      {member.name.charAt(0)}
-                    </div>
+                    {member.profilePictureUrl ? (
+                      <img
+                        src={member.profilePictureUrl}
+                        alt={member.name}
+                        className="w-8 h-8 rounded-full object-cover"
+                        onError={(e) => {
+                          e.target.style.display = 'none';
+                        }}
+                      />
+                    ) : null}
+                    {!member.profilePictureUrl && (
+                      <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#c41e3a] to-[#fbb034] flex items-center justify-center text-sm font-bold">
+                        {member.name.charAt(0)}
+                      </div>
+                    )}
                     <div className="flex-1">
                       <p className="text-sm font-medium">{member.name}</p>
                       {member.userId === party.ownerUserId && (
@@ -416,7 +469,11 @@ const handleFirstEvent = (syncEvent) => {
               <h3 className="text-lg font-semibold mb-3">Chat 💬</h3>
               
               {/* Messages */}
-              <div className="flex-1 overflow-y-auto space-y-2 mb-3">
+              <div 
+                ref={messagesContainerRef}
+                onScroll={handleMessagesScroll}
+                className="flex-1 overflow-y-auto space-y-2 mb-3"
+              >
                 {messages.length === 0 ? (
                   <p className="text-center text-white/50 text-sm">No messages yet. Say hi! 👋</p>
                 ) : (
@@ -429,6 +486,7 @@ const handleFirstEvent = (syncEvent) => {
                     </div>
                   ))
                 )}
+                <div ref={messagesEndRef} />
               </div>
 
               {/* Send Message */}
