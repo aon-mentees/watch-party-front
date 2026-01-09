@@ -460,7 +460,7 @@ const handleFirstEvent = (syncEvent) => {
 
           {/* Sidebar */}
           <div>
-            <div className="bg-[#0d0a12] border border-red-900/20 rounded-2xl p-4 flex flex-col h-115">
+            <div className="bg-[#0d0a12] border border-red-900/20 rounded-2xl p-4 flex flex-col h-116">
               {/* Tab Buttons */}
               <div className="flex gap-2 mb-4">
                 <button
