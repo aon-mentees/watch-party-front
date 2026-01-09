@@ -10,7 +10,7 @@ const normalizeUser = (data) => ({
   name: data?.fullName || data?.name,
   email: data?.email,
   phoneNumber: data?.phoneNumber,
-  profilePictureUrl: data?.profilePictureUrl || data?.avatarUrl,
+  profilePictureUrl: data?.profilePicture || data?.profilePictureUrl || data?.avatarUrl,
 });
 
 const Profile = () => {
@@ -23,6 +23,7 @@ const Profile = () => {
   const [savingProfile, setSavingProfile] = useState(false);
   const [uploadingPicture, setUploadingPicture] = useState(false);
   const [deletingAccount, setDeletingAccount] = useState(false);
+  const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [loading, setLoading] = useState(true);
 
   const fetchCurrentUser = async () => {
@@ -30,16 +31,26 @@ const Profile = () => {
     try {
       const apiUser = await userService.getMe();
       const normalizedUser = normalizeUser(apiUser);
-      setUser(normalizedUser);
+      const userId = normalizedUser.id;
+      
+      const profileData = await userService.getProfile(userId);
+      const normalizedProfile = normalizeUser(profileData);
+      
+      const fullUserData = {
+        ...normalizedUser,
+        profilePictureUrl: normalizedProfile.profilePictureUrl || normalizedUser.profilePictureUrl,
+      };
+      
+      setUser(fullUserData);
       setProfileForm({
-        fullName: normalizedUser?.name || "",
-        email: normalizedUser?.email || "",
-        phoneNumber: normalizedUser?.phoneNumber || "",
+        fullName: fullUserData?.name || "",
+        email: fullUserData?.email || "",
+        phoneNumber: fullUserData?.phoneNumber || "",
       });
-      if (normalizedUser?.profilePictureUrl) {
-        setHeaderProfilePicture(normalizedUser.profilePictureUrl);
+      if (fullUserData?.profilePictureUrl) {
+        setHeaderProfilePicture(fullUserData.profilePictureUrl);
       }
-      localStorage.setItem("currentUser", JSON.stringify(normalizedUser));
+      localStorage.setItem("currentUser", JSON.stringify(fullUserData));
     } catch (error) {
       console.error("Error fetching current user:", error);
       toast.error(error?.message || "Session expired. Please login again.");
@@ -167,9 +178,7 @@ const Profile = () => {
   };
 
   const handleDeleteAccount = async () => {
-    const confirmed = window.confirm("Are you sure you want to delete your account? This cannot be undone.");
-    if (!confirmed) return;
-
+    setShowDeleteConfirm(false);
     setDeletingAccount(true);
     try {
       await userService.deleteAccount();
@@ -332,22 +341,34 @@ const Profile = () => {
                 <h3 className="text-lg font-semibold">Profile Picture</h3>
               </div>
               <div className="flex items-center gap-4 mb-4">
-                <div className="w-16 h-16 rounded-full bg-[#1a1520] border border-red-900/20 flex items-center justify-center overflow-hidden">
-                  {picturePreview ? (
-                    <img src={picturePreview} alt="Profile preview" className="w-full h-full object-cover" />
-                  ) : (
-                    <Icon name="user" className="w-8 h-8 text-white/60" strokeWidth={2} />
-                  )}
-                </div>
-                <div className="flex-1">
+              
+                <div className="flex-1 relative">
+
                   <input
+                    id="profile-picture-input"
                     type="file"
                     accept="image/*"
                     onChange={handlePictureSelect}
                     disabled={uploadingPicture}
-                    className="w-full text-sm text-white"
+                    className="hidden"
                   />
-                  <p className="text-xs text-white/50 mt-1">Max size: 5MB. JPG/PNG recommended.</p>
+                  <label
+                    htmlFor="profile-picture-input"
+                    className="block w-full px-4 py-4 bg-[#120c18] border-2 border-dashed border-red-900/40 rounded-xl text-white text-center cursor-pointer hover:border-red-500/60 hover:shadow-[0_0_26px_rgba(196,30,58,0.25)] transition-all disabled:opacity-50"
+                  >
+                    <div className="flex flex-col items-center gap-2">
+                      {picturePreview ? (
+                        <img src={picturePreview} alt="Preview" className="w-16 h-16 rounded-full object-cover border-2 border-red-900/40" />
+                      ) : (
+                        <div className="w-10 h-10 rounded-full bg-[#1a1520] border border-red-900/40 flex items-center justify-center">
+                          <Icon name="camera" className="w-6 h-6" strokeWidth={2} />
+                        </div>
+                      )}
+                      <span className="font-semibold text-sm">
+                        {pictureFile ? pictureFile.name : "Click to choose a picture"}
+                      </span>
+                    </div>
+                  </label>
                 </div>
               </div>
               <div className="flex gap-2">
@@ -377,7 +398,7 @@ const Profile = () => {
               </div>
               <p className="text-sm text-white/60 mb-4">Delete your account and all associated data.</p>
               <button
-                onClick={handleDeleteAccount}
+                onClick={() => setShowDeleteConfirm(true)}
                 disabled={deletingAccount}
                 className="w-full px-4 py-2 bg-red-800 text-white rounded-lg font-semibold hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed transition-all"
               >
@@ -387,6 +408,37 @@ const Profile = () => {
           </div>
         </div>
       </main>
+
+      {/* Delete Confirmation Modal */}
+      {showDeleteConfirm && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+          <div className="bg-[#0d0a12] border border-red-900/30 rounded-2xl p-6 max-w-md w-full shadow-2xl">
+            <div className="flex items-center gap-3 mb-4">
+              <Icon name="warning" className="w-8 h-8 text-[#fbb034]" strokeWidth={2} />
+              <h3 className="text-xl font-semibold text-white">Delete Account</h3>
+            </div>
+            <p className="text-white/80 mb-6">
+              Are you sure you want to delete your account? This action cannot be undone and all your data will be permanently removed.
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowDeleteConfirm(false)}
+                disabled={deletingAccount}
+                className="flex-1 px-4 py-2 bg-[#1a1520] hover:bg-[#2a2530] text-white rounded-lg font-semibold transition-all disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleDeleteAccount}
+                disabled={deletingAccount}
+                className="flex-1 px-4 py-2 bg-red-800 hover:bg-red-700 text-white rounded-lg font-semibold transition-all disabled:opacity-50"
+              >
+                {deletingAccount ? "Deleting..." : "Delete"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };
