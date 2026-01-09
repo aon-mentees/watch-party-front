@@ -62,6 +62,7 @@ function App() {
         draggable
         pauseOnHover
         theme="dark"
+        closeButton={false}
       />
     </>
   );
