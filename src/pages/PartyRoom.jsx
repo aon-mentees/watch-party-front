@@ -408,28 +408,30 @@ const handleFirstEvent = (syncEvent) => {
               )}
             </div>
 
-            {/* Change Video URL */}
-            <div className="bg-[#0d0a12] border border-red-900/20 rounded-2xl p-4">
-              <h3 className="text-lg font-semibold mb-3">Change Video 🎥</h3>
-              <div className="flex gap-2">
-                <input
-                  type="text"
-                  value={newVideoUrl}
-                  onChange={(e) => setNewVideoUrl(e.target.value)}
-                  placeholder="Paste video URL here..."
-                  className="flex-1 rounded-lg border-0 bg-[#1a1520] px-4 py-2 text-white placeholder:text-[#8d889d]"
-                />
-                <button
-                  onClick={handleChangeVideo}
-                  className="px-6 py-2 rounded-lg bg-gradient-to-br from-[#c41e3a] via-[#d4145a] to-[#fbb034] hover:opacity-90 transition-opacity"
-                >
-                  Load Video
-                </button>
+            {/* Change Video URL - Only visible to owner */}
+            {user?.id === party?.ownerUserId && (
+              <div className="bg-[#0d0a12] border border-red-900/20 rounded-2xl p-4">
+                <h3 className="text-lg font-semibold mb-3">Change Video 🎥</h3>
+                <div className="flex gap-2">
+                  <input
+                    type="text"
+                    value={newVideoUrl}
+                    onChange={(e) => setNewVideoUrl(e.target.value)}
+                    placeholder="Paste video URL here..."
+                    className="flex-1 rounded-lg border-0 bg-[#1a1520] px-4 py-2 text-white placeholder:text-[#8d889d]"
+                  />
+                  <button
+                    onClick={handleChangeVideo}
+                    className="px-6 py-2 rounded-lg bg-gradient-to-br from-[#c41e3a] via-[#d4145a] to-[#fbb034] hover:opacity-90 transition-opacity"
+                  >
+                    Load Video
+                  </button>
+                </div>
+                <p className="text-xs text-white/40 mt-2">
+                  Supported: Direct video links (.mp4, .webm) or streaming URLs
+                </p>
               </div>
-              <p className="text-xs text-white/40 mt-2">
-                Supported: Direct video links (.mp4, .webm) or streaming URLs
-              </p>
-            </div>
+            )}
           </div>
 
           {/* Sidebar */}
