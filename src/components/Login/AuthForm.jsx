@@ -38,7 +38,9 @@ const AuthForm = ({ type, active, title, isSignup }) => {
     const { name, value } = e.target;
     if (name === "phoneNumber") {
       const digitsOnly = value.replace(/\D/g, "");
-      setFormData({ ...formData, phoneNumber: digitsOnly });
+      // Limit to 10 or 11 digits
+      const limitedDigits = digitsOnly.slice(0, 10);
+      setFormData({ ...formData, phoneNumber: limitedDigits });
       return;
     }
     setFormData({
@@ -63,7 +65,7 @@ const AuthForm = ({ type, active, title, isSignup }) => {
 
         const formattedPhone = formatPhone(formData.phoneNumber);
         if (!/^\+964\d{10}$/.test(formattedPhone)) {
-          toast.error("Phone must be an Iraqi number starting with +964.", {
+          toast.error("Phone must be an Iraqi number with 10 digits.", {
             icon: <Icon name="warning" className="w-5 h-5 text-[#fbb034]" strokeWidth={2} />,
           });
           setLoading(false);
@@ -168,7 +170,7 @@ const AuthForm = ({ type, active, title, isSignup }) => {
                 <input
                   type="tel"
                   name="phoneNumber"
-                  placeholder="0780 996 1817"
+                  placeholder="780 996 1817"
                   value={formData.phoneNumber}
                   onChange={handleChange}
                   disabled={loading}
