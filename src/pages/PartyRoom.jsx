@@ -37,10 +37,11 @@ const PartyRoom = () => {
   const userNamesMap = useRef({});
 
   useEffect(() => {
-    if (!userScrolledUp && messagesEndRef.current) {
-      messagesEndRef.current.scrollIntoView({ behavior: 'smooth' });
+    if (messagesContainerRef.current) {
+      const container = messagesContainerRef.current;
+      container.scrollTop = container.scrollHeight;
     }
-  }, [messages, userScrolledUp]);
+  }, [messages]);
 
   const handleMessagesScroll = () => {
     if (!messagesContainerRef.current) return;
